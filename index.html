@@ -4,11 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
+<!-- iOS lädt das Icon nur beim Anlegen der Verknüpfung. Dateiname icon.png (180 px, ohne Transparenz) beibehalten. -->
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="Mathe-Trainer">
 <title>Mathe-Trainer 5. Klasse</title>
 <style>
 :root{--bg:#f6f7fb;--card:#fff;--ink:#1d2433;--mute:#6b7487;--accent:#4f46e5;--accent-soft:#eceafe;--ok:#16a34a;--ok-soft:#dcfce7;--bad:#dc2626;--bad-soft:#fee2e2;--line:#d9deea}
 @media (prefers-color-scheme:dark){:root{--bg:#12151f;--card:#1b2030;--ink:#e8ebf4;--mute:#9aa3b8;--accent:#8b86ff;--accent-soft:#272a4a;--ok:#4ade80;--ok-soft:#14301f;--bad:#f87171;--bad-soft:#3a1c1f;--line:#333a50}}
-*{box-sizing:border-box}
+/* touch-action:manipulation schaltet den Doppeltipp-Zoom von Safari ab (schnelles Tippen auf
+   Antworten zoomte sonst hinein), Zwei-Finger-Zoom bleibt erlaubt. Auf allen Elementen, weil es nicht vererbt wird. */
+*{box-sizing:border-box;touch-action:manipulation}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
 header{padding:18px 16px 6px;max-width:640px;margin:0 auto}
 header h1{margin:0;font-size:22px}
