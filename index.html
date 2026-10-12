@@ -55,6 +55,7 @@ svg{max-width:300px;width:100%;height:auto;display:block;margin:0 auto 12px}
 .wall div{display:flex;gap:4px}
 .wall span{min-width:62px;padding:8px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;background:var(--bg);font-weight:600;font-size:16px}
 .wall span.gap{border:2px dashed var(--accent);color:var(--accent);background:var(--accent-soft)}
+button.seg.mal{min-width:48px;padding:8px 10px}
 .secbtn{display:grid;grid-template-columns:76px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;margin-top:8px}
 .secbtn .pg{color:var(--mute);font-size:13px;white-space:nowrap}
 .secbtn .ics{font-size:18px;white-space:nowrap}
@@ -566,6 +567,21 @@ function gFlEinheit(l){
   return {q:`${n} ${big} ${fmt(m)} ${small} = ? ${small}`,a:n*f+m,unit:small,sol:`${n} ${big} = ${fmt(n*f)} ${small}, plus ${fmt(m)} ${small} = ${fmt(n*f+m)} ${small}.`};
 }
 
+/* ---------- 1×1-Training ---------- */
+/* Stufe 1: nur Malaufgaben. Stufe 2: dazu Geteilt- und Lückenaufgaben.
+   MAL.reihen = gewählte Reihen (1 bis 9), der andere Faktor läuft von 1 bis 9.
+   q.reihen merkt sich beide Faktoren, damit die App schwache Reihen erkennt. */
+const MAL={stufe:1,reihen:[1,2,3,4,5,6,7,8,9]};
+function g1x1(){
+  const r=pick(MAL.reihen.length?MAL.reihen:[1,2,3,4,5,6,7,8,9]),k=R(1,9);
+  const [a,b]=R(0,1)?[r,k]:[k,r],c=a*b,reihen=[a,b];
+  const kind=MAL.stufe===1?0:pick([0,1,1,2,3]);
+  if(kind===0)return {q:`<b>${a} · ${b}</b> = ?`,a:c,reihen,sol:`${a} · ${b} = ${c}.`+(a>1&&b>1?` Probe mit Geteilt: ${c} : ${b} = ${a}.`:'')};
+  if(kind===1)return {q:`<b>${c} : ${b}</b> = ?`,a:a,reihen,sol:`${c} : ${b} = ${a}, denn ${a} · ${b} = ${c}.`};
+  if(kind===2)return {q:`<b>? · ${b} = ${c}</b>`,a:a,reihen,ph:'fehlende Zahl',sol:`Rechne rückwärts: ${c} : ${b} = ${a}. Also ${a} · ${b} = ${c}.`};
+  return {q:`<b>${a} · ? = ${c}</b>`,a:b,reihen,ph:'fehlende Zahl',sol:`Rechne rückwärts: ${c} : ${a} = ${b}. Also ${a} · ${b} = ${c}.`};
+}
+
 /* Reihenfolge wie im Buch. */
 const TOPICS=[
   {id:'daten',name:'Daten & Diagramme',icon:'📊',gens:[gDiagramm,gStrich],tip:'Geh vom oberen Ende der Säule waagrecht zur Achse und lies dort ab. In einer Strichliste ist jedes Bündel 5.'},
@@ -582,7 +598,10 @@ const TOPICS=[
   {id:'ganz',name:'Ganze Zahlen',icon:'🌡️',gens:[gGanzVergl,gGanzRechnen],tip:'Negative Zahlen liegen links von der Null. Plus eine negative Zahl heißt minus, minus eine negative Zahl heißt plus. Das Minuszeichen setzt du mit dem ±-Knopf.'},
   {id:'teil',name:'Teilbarkeit',icon:'🧩',gens:[gTeil,gPrim,gGgtKgv],tip:'Teilbarkeitsregeln: 2 → Endziffer gerade, 5 → 0 oder 5, 10 → 0, 3 und 9 → Quersumme. Eine Primzahl hat genau zwei Teiler: 1 und sich selbst.'},
   {id:'winkel',name:'Winkel',icon:'🕒',gens:[gWinkel],tip:'Spitz unter 90°, recht genau 90°, stumpf bis 180°, gestreckt 180°, überstumpf bis 360°, voll 360°. Nebenwinkel ergeben zusammen 180°, Scheitelwinkel sind gleich groß.'},
-  {id:'flaeche',name:'Umfang & Flächeninhalt',icon:'🟩',gens:[gFlaeche,gFlEinheit],tip:'Umfang = alle Seiten zusammen. Fläche Rechteck = Länge · Breite. Flächeneinheiten haben die Umrechnungszahl 100: mm², cm², dm², m², a, ha, km².'}
+  {id:'flaeche',name:'Umfang & Flächeninhalt',icon:'🟩',gens:[gFlaeche,gFlEinheit],tip:'Umfang = alle Seiten zusammen. Fläche Rechteck = Länge · Breite. Flächeneinheiten haben die Umrechnungszahl 100: mm², cm², dm², m², a, ha, km².'},
+  /* extra: eigener Bereich auf der Startseite, nicht im Themen-Raster, nicht in
+     "Alles gemischt", nicht in der Buchzuordnung und nicht in "Alles drin". */
+  {id:'einmaleins',name:'1×1 üben',icon:'✖️',gens:[g1x1],extra:true,tip:'Tauschaufgabe hilft: 7 · 8 ist dasselbe wie 8 · 7. Geteilt ist die Umkehrung: 56 : 8 = 7, weil 7 · 8 = 56. Bei einer Lücke rechnest du rückwärts mit Geteilt.'}
 ];
 const TOPIC_BY_ID=Object.fromEntries(TOPICS.map(t=>[t.id,t]));
 
@@ -655,6 +674,9 @@ const freshStats=()=>({streak:0,best:0,lastDay:null,today:0,goalDays:0,frz:null,
   answered:0,right:0,perfect:0,hardRight:0,combo:0,bestCombo:0,mastered:{}});
 function load(){try{S=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){S={};}
   S.stars=S.stars||0;S.hist=S.hist||{};S.pages=S.pages||{};S.lvl=S.lvl||2;
+  S.mal=S.mal||{};   // 1×1: je Reihe die letzten 20 Antworten (1 = richtig)
+  const mr=(Array.isArray(S.malReihen)?S.malReihen:[]).filter(r=>Number.isInteger(r)&&r>=1&&r<=9);
+  MAL.reihen=mr.length?mr:[1,2,3,4,5,6,7,8,9];
   S.st=Object.assign(freshStats(),S.st||{});delete S.days;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
@@ -692,7 +714,8 @@ function activity(n){
 const TIERS=['bronze','silver','gold','diamond'];
 const MCATS=[['serie','Serie'],['ziel','Tagesziel'],['aufgaben','Richtige Aufgaben'],['treffer','Richtige in Folge'],
   ['runden','Perfekte Runden'],['themen','Themen gemeistert'],['profi','Stufe „Schwer“']];
-const masteredCnt=()=>Object.keys(S.st.mastered).length;
+const BUCH_TOPICS=TOPICS.filter(t=>!t.extra);
+const masteredCnt=()=>Object.keys(S.st.mastered).filter(id=>TOPIC_BY_ID[id]&&!TOPIC_BY_ID[id].extra).length;
 const M=(cat,id,icon,name,tier,need,one,many,val,desc)=>({cat,id,icon,name,tier,need,one,many,val,desc});
 const MEDALS=[
   M('serie','s3','🔥','Funke','bronze',3,'Tag','Tage',()=>S.st.best,'3 Tage in Folge'),
@@ -717,7 +740,7 @@ const MEDALS=[
   M('runden','p50','🌟','Perfektionist','gold',50,'Runde','Runden',()=>S.st.perfect,'50 Runden 10 von 10'),
   M('themen','t1','📘','Erstes Thema','bronze',1,'Thema','Themen',masteredCnt,'1 Thema gemeistert'),
   M('themen','t5','📚','Fünf Themen','silver',5,'Thema','Themen',masteredCnt,'5 Themen gemeistert'),
-  M('themen','tA','🎓','Alles drin','gold',TOPICS.length,'Thema','Themen',masteredCnt,'Alle '+TOPICS.length+' Themen gemeistert'),
+  M('themen','tA','🎓','Alles drin','gold',BUCH_TOPICS.length,'Thema','Themen',masteredCnt,'Alle '+BUCH_TOPICS.length+' Themen gemeistert'),
   M('profi','h25','💪','Mutig','bronze',25,'Aufgabe','Aufgaben',()=>S.st.hardRight,'25 schwere Aufgaben richtig'),
   M('profi','h100','🧩','Knobler','silver',100,'Aufgabe','Aufgaben',()=>S.st.hardRight,'100 schwere Aufgaben richtig'),
   M('profi','h500','🚀','Mathe-Genie','diamond',500,'Aufgabe','Aufgaben',()=>S.st.hardRight,'500 schwere Aufgaben richtig')
@@ -796,20 +819,47 @@ function goalStrip(){
 
 function mastery(id){const h=S.hist[id]||[];return h.length?Math.round(100*h.reduce((a,b)=>a+b,0)/h.length):null;}
 
+/* Kasten "1×1 üben" auf der Startseite. Zeigt die bis zu drei schwächsten Reihen
+   (mindestens 5 Antworten, unter 90 % richtig), damit man gezielt üben kann. */
+function malCard(){
+  const alle=MAL.reihen.length===9,R9=[1,2,3,4,5,6,7,8,9];
+  const chip=(v,t,on)=>`<button class="seg mal ${on?'on':''}" data-reihe="${v}">${t}</button>`;
+  const schwach=R9.map(r=>{const h=S.mal[r]||[];return {r,n:h.length,p:h.length?Math.round(100*h.reduce((a,b)=>a+b,0)/h.length):100};})
+    .filter(x=>x.n>=5&&x.p<90).sort((a,b)=>a.p-b.p).slice(0,3);
+  return `<div class="card"><h2>✖️ 1×1 üben</h2>
+    <div class="mute" style="margin-bottom:8px">Welche Reihen?</div>
+    <div class="row">${chip('alle','Alle',alle)}${R9.map(r=>chip(r,r+'er',!alle&&MAL.reihen.includes(r))).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="primary" id="mal1">Stufe 1 · Malaufgaben</button><button class="primary" id="mal2">Stufe 2 · Mal, geteilt, Lücken</button></div>
+    <div class="mute" style="margin-top:8px">Stufe 1: nur Malnehmen wie <span style="white-space:nowrap">7 · 8</span>. Stufe 2: auch Geteiltaufgaben wie <span style="white-space:nowrap">56 : 8</span> und fehlende Zahlen wie <span style="white-space:nowrap">? · 7 = 56</span>.</div>
+    ${schwach.length?`<div class="mute" style="margin-top:8px">Noch üben: <b>${schwach.map(x=>x.r+'er ('+x.p+' %)').join(', ')}</b></div>`:''}
+  </div>`;
+}
+
 function renderHome(msg=''){
   app.innerHTML=`${goalStrip()}
+  ${malCard()}
   <div class="card"><h2>📖 Aufgaben zur Buchseite</h2>
     <div class="row"><input id="pg" type="number" inputmode="numeric" min="1" max="400" placeholder="Seitenzahl im Buch" style="flex:1;min-width:150px"><button class="primary" id="pgGo">Suchen</button></div>
     <div id="pgOut" class="mute" style="margin-top:10px">${msg}</div></div>
   <div class="card"><h2>Schwierigkeit</h2><div class="row">
     ${[['1','Leicht'],['2','Mittel'],['3','Schwer']].map(([v,t])=>`<button class="seg ${S.lvl==v?'on':''}" data-lvl="${v}">${t}</button>`).join('')}</div></div>
   <div class="card"><h2>Thema wählen</h2><div class="grid">
-    ${TOPICS.map(t=>{const m=mastery(t.id);return `<button class="topic" data-t="${t.id}"><span class="ic">${t.icon}</span><span class="nm">${t.name}</span><span class="sm">${m===null?'noch nicht geübt':m+' % richtig'}</span></button>`;}).join('')}
+    ${BUCH_TOPICS.map(t=>{const m=mastery(t.id);return `<button class="topic" data-t="${t.id}"><span class="ic">${t.icon}</span><span class="nm">${t.name}</span><span class="sm">${m===null?'noch nicht geübt':m+' % richtig'}</span></button>`;}).join('')}
   </div><div class="row" style="margin-top:12px"><button class="primary" id="mix">🎲 Alles gemischt</button></div></div>`;
   document.getElementById('goalStrip').onclick=()=>{tab='erfolge';render();};
   app.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>{S.lvl=+b.dataset.lvl;save();renderHome(document.getElementById('pgOut').innerHTML);});
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>start([b.dataset.t]));
-  document.getElementById('mix').onclick=()=>start(TOPICS.map(t=>t.id));
+  document.getElementById('mix').onclick=()=>start(BUCH_TOPICS.map(t=>t.id));
+  // 1×1: Reihen wählen und Stufe starten
+  app.querySelectorAll('[data-reihe]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.reihe,alle=MAL.reihen.length===9;
+    if(v==='alle')MAL.reihen=[1,2,3,4,5,6,7,8,9];
+    else{const r=+v;MAL.reihen=alle?[r]:MAL.reihen.includes(r)?MAL.reihen.filter(x=>x!==r):[...MAL.reihen,r].sort((x,y)=>x-y);
+      if(!MAL.reihen.length)MAL.reihen=[1,2,3,4,5,6,7,8,9];}
+    S.malReihen=MAL.reihen;save();renderHome(document.getElementById('pgOut').innerHTML);
+  });
+  document.getElementById('mal1').onclick=()=>{MAL.stufe=1;start(['einmaleins']);};
+  document.getElementById('mal2').onclick=()=>{MAL.stufe=2;start(['einmaleins']);};
   const go=()=>{
     const p=parseInt(document.getElementById('pg').value,10),out=document.getElementById('pgOut');
     if(!p){out.textContent='Bitte eine Seitenzahl eingeben.';return;}
@@ -877,7 +927,10 @@ function answer(v){
   const q=cur.q,ok=check(q,v);cur.answered=true;
   const h=S.hist[q.topic]=(S.hist[q.topic]||[]);h.push(ok?1:0);if(h.length>30)h.shift();
   const st=S.st;st.answered++;
-  if(ok){cur.right++;st.right++;st.combo++;st.bestCombo=Math.max(st.bestCombo,st.combo);if(S.lvl===3)st.hardRight++;
+  // 1×1: Antwort bei beiden Faktoren-Reihen verbuchen, für die Anzeige "Noch üben"
+  if(q.reihen)new Set(q.reihen).forEach(r=>{const m=S.mal[r]=(S.mal[r]||[]);m.push(ok?1:0);if(m.length>20)m.shift();});
+  // "Schwer"-Medaillen nur für Buchthemen, das 1×1 kennt keine Stufe Schwer
+  if(ok){cur.right++;st.right++;st.combo++;st.bestCombo=Math.max(st.bestCombo,st.combo);if(S.lvl===3&&!TOPIC_BY_ID[q.topic].extra)st.hardRight++;
     if(!cur.hinted){cur.stars++;S.stars++;}}
   else{st.combo=0;cur.wrong.push({q:q.q,a:showAns(q),mine:v});}
   if(h.length>=MASTER_MIN&&mastery(q.topic)>=MASTER_PCT&&!st.mastered[q.topic]){st.mastered[q.topic]=dayIdx();toast(`📘 Thema gemeistert: ${TOPIC_BY_ID[q.topic].name}`);}
@@ -911,7 +964,7 @@ function renderProgress(){
   <div class="card"><h2>Fortschritt je Thema</h2><div class="mute" style="margin-bottom:10px">Anteil richtiger Antworten bei den letzten 30 Aufgaben je Thema.</div>
   ${TOPICS.map(t=>{const m=mastery(t.id),n=(S.hist[t.id]||[]).length;return `<div style="margin-bottom:14px"><div class="row" style="justify-content:space-between"><span>${t.icon} ${t.name}</span><span class="mute">${m===null?'–':m+' % ('+n+' Aufg.)'}</span></div><div class="bar"><i style="width:${m||0}%;background:${m!==null&&m<60?'var(--bad)':'var(--ok)'}"></i></div></div>`;}).join('')}</div>
   <div class="card"><button id="reset">Fortschritt zurücksetzen</button></div>`;
-  document.getElementById('reset').onclick=()=>{if(confirm('Wirklich alle Sterne, Medaillen, die Serie und den Fortschritt löschen? Die Seitenzuordnung bleibt erhalten.')){S.stars=0;S.hist={};S.st=freshStats();save();renderProgress();}};
+  document.getElementById('reset').onclick=()=>{if(confirm('Wirklich alle Sterne, Medaillen, die Serie und den Fortschritt löschen? Die Seitenzuordnung bleibt erhalten.')){S.stars=0;S.hist={};S.mal={};S.st=freshStats();save();renderProgress();}};
 }
 
 /* ---------- Erfolge ---------- */
@@ -989,7 +1042,7 @@ function renderPages(){
   h+=`<details class="card"><summary><b>Eigene Seiten ergänzen</b></summary>
     <div class="mute" style="margin:10px 0 12px">Nur nötig, wenn ihr eine andere Ausgabe des Buchs habt oder eine Seite zusätzlich einem Thema zuordnen wollt. Die Seitensuche zeigt dann beides.</div>
     <div class="pagetbl"><b>Thema</b><b>von S.</b><b>bis S.</b>
-    ${TOPICS.map(t=>{const r=S.pages[t.id]||[];return `<span>${t.icon} ${t.name}</span><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="0" value="${r[0]??''}"><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="1" value="${r[1]??''}">`;}).join('')}
+    ${BUCH_TOPICS.map(t=>{const r=S.pages[t.id]||[];return `<span>${t.icon} ${t.name}</span><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="0" value="${r[0]??''}"><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="1" value="${r[1]??''}">`;}).join('')}
     </div></details>`;
   app.innerHTML=h;
   app.querySelectorAll('[data-sec]').forEach(b=>b.onclick=()=>start(BOOK[+b.dataset.sec][3]));
