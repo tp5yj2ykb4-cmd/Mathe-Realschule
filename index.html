@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" href="icon.png">
 <meta name="apple-mobile-web-app-title" content="Mathe-Trainer">
-<title>Mathe-Trainer 5. Klasse</title>
+<title>Mathe-Trainer</title>
 <style>
 :root{--bg:#f6f7fb;--card:#fff;--ink:#1d2433;--mute:#6b7487;--accent:#4f46e5;--accent-soft:#eceafe;--ok:#16a34a;--ok-soft:#dcfce7;--bad:#dc2626;--bad-soft:#fee2e2;--line:#d9deea}
 @media (prefers-color-scheme:dark){:root{--bg:#12151f;--card:#1b2030;--ink:#e8ebf4;--mute:#9aa3b8;--accent:#8b86ff;--accent-soft:#272a4a;--ok:#4ade80;--ok-soft:#14301f;--bad:#f87171;--bad-soft:#3a1c1f;--line:#333a50}}
@@ -29,7 +29,7 @@ button.seg.on{background:var(--accent-soft);border-color:var(--accent);color:var
 button:disabled{opacity:.5;cursor:default}
 input[type=text],input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
 input.small{width:84px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px}
 .topic{text-align:left;display:flex;flex-direction:column;gap:2px;padding:12px}
 .topic .ic{font-size:22px}
 .topic .nm{font-weight:600;font-size:14px}
@@ -62,6 +62,28 @@ button.seg.mal{min-width:48px;padding:8px 10px}
 details.card summary{cursor:pointer;min-height:28px}
 .stat{display:flex;justify-content:space-around;text-align:center}
 .stat b{display:block;font-size:24px}
+/* Kopfzeile mit Profil-Knopf, Profile, Tests */
+header .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+button.who{flex:0 0 auto;min-height:40px;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:600;max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.prof{display:flex;gap:12px;align-items:center}
+.prof .av{font-size:30px;width:52px;height:52px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.prof b{font-size:17px}
+select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+label.lb{display:block;font-size:13px;color:var(--mute);margin:12px 0 6px}
+.note{font-size:64px;font-weight:800;line-height:1;color:var(--accent);margin-top:6px}
+.tlog{border-top:1px solid var(--line);padding:10px 0}
+.tlog:first-of-type{border-top:none}
+.tlog .k{font-weight:700;margin-right:6px}
+.tlog.ok .k{color:var(--ok)}
+.tlog.bad .k{color:var(--bad)}
+.schrift{display:block;width:max-content;margin:10px 0 0 6px;font:600 26px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.schrift span{display:block;white-space:pre}
+.schrift span.u{border-bottom:2px solid var(--ink);padding-bottom:2px}
+table.fp{border-collapse:collapse;margin:12px 0 4px;font-size:16px}
+table.fp th,table.fp td{border:1px solid var(--line);padding:6px 14px;text-align:left}
+table.fp th{background:var(--accent-soft)}
+.hist{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;font-size:14px}
 
 /* ===== Tagesziel, Serie, Medaillen (wie im English Trainer) ===== */
 .goal{display:block;width:100%;text-align:left;padding:11px 14px 12px;margin:12px 0 0;border-radius:14px}
@@ -143,15 +165,15 @@ details.card summary{cursor:pointer;min-height:28px}
 </head>
 <body>
 <header>
-  <h1>🧮 Mathe-Trainer · 5. Klasse</h1>
-  <p>Zum Buch „Westermann Mathematik 5“ (Realschule Bayern) · Übungen werden zufällig erzeugt</p>
+  <div class="hrow"><div style="min-width:0"><h1>🧮 Mathe-Trainer</h1><p id="hSub"></p></div><button class="who" id="who" aria-label="Profil wechseln"></button></div>
 </header>
 <main id="app"></main>
 <nav>
   <button data-tab="ueben">✏️<br>Üben</button>
+  <button data-tab="tests">📝<br>Tests</button>
   <button data-tab="erfolge">🏅<br>Erfolge</button>
   <button data-tab="fortschritt">📊<br>Fortschritt</button>
-  <button data-tab="seiten">📖<br>Buchseiten</button>
+  <button data-tab="seiten">📖<br>Buch</button>
 </nav>
 <div class="cele" id="cele">
   <div class="confetti" id="confetti"></div>
@@ -400,12 +422,14 @@ function gDiagramm(l){
   const [thema,labels]=pick([['Lieblingsobst',['Apfel','Banane','Birne','Kiwi','Traube']],['Lieblingstier',['Hund','Katze','Pferd','Hase','Vogel']],
     ['Schulweg',['Bus','Rad','zu Fuß','Auto']],['Lieblingssport',['Fußball','Turnen','Tennis','Reiten']]]);
   const step=l===1?1:l===2?2:5,max=step*10,vals=labels.map(()=>R(1,10)*step);
-  const svg=barSvg(labels,vals,step,max),intro=`Die Klasse 5b wurde nach ihrem ${thema} gefragt.`;
+  const svg=barSvg(labels,vals,step,max),intro=`Die Kinder einer Klasse wurden nach ihrem ${thema} gefragt.`;
   const k=R(0,l===1?1:3),i=R(0,labels.length-1);
   if(k===0)return {q:`${intro} Wie viele Kinder haben <b>${labels[i]}</b> gewählt?`,svg,a:vals[i],sol:`Geh von der Säule ${labels[i]} waagrecht nach links zur Achse: ${vals[i]}.`};
-  if(k===1){let j=R(0,labels.length-1);while(j===i)j=R(0,labels.length-1);
+  if(k===1){let j=R(0,labels.length-1);for(let t=0;t<60&&(j===i||vals[j]===vals[i]);t++)j=R(0,labels.length-1);
+    /* Zwei gleich hohe Säulen ergäben "0 mehr": dann eine Säule um einen Schritt ändern. */
+    let s2=svg;if(j===i||vals[j]===vals[i]){j=(i+1)%labels.length;vals[j]=vals[i]===max?vals[i]-step:vals[i]+step;s2=barSvg(labels,vals,step,max);}
     const hi=vals[i]>=vals[j]?i:j,lo=hi===i?j:i;
-    return {q:`${intro} Wie viele Kinder mehr haben <b>${labels[hi]}</b> gewählt als <b>${labels[lo]}</b>?`,svg,a:vals[hi]-vals[lo],sol:`${labels[hi]}: ${vals[hi]}, ${labels[lo]}: ${vals[lo]}. Unterschied: ${vals[hi]} − ${vals[lo]} = ${vals[hi]-vals[lo]}.`};}
+    return {q:`${intro} Wie viele Kinder mehr haben <b>${labels[hi]}</b> gewählt als <b>${labels[lo]}</b>?`,svg:s2,a:vals[hi]-vals[lo],sol:`${labels[hi]}: ${vals[hi]}, ${labels[lo]}: ${vals[lo]}. Unterschied: ${vals[hi]} − ${vals[lo]} = ${vals[hi]-vals[lo]}.`};}
   if(k===2){const sum=vals.reduce((a,b)=>a+b,0);
     return {q:`${intro} Wie viele Kinder wurden <b>insgesamt</b> befragt?`,svg,a:sum,sol:`Alle Säulen zusammen: ${vals.join(' + ')} = ${sum}.`};}
   /* Für „am häufigsten“ muss die höchste Säule eindeutig sein. */
@@ -658,7 +682,379 @@ function gKopf(){
   const b=R(3,9);return rest(b,R(11,30),R(1,b-1));
 }
 
-/* Reihenfolge wie im Buch. */
+/* ---------- 3. Klasse Grundschule (Welt der Zahl 3, Bayern; Zahlenraum bis 1 000) ---------- */
+/* Eigene Generatoren, weil die Aufgaben der 5. Klasse zu groß sind, abgestimmt auf die Kapitel
+   des Buchs. Keine negativen Ergebnisse. Antworttyp 'geld': Kommazahl mit höchstens zwei
+   Nachkommastellen (Euro oder Meter), q.a in Hundertsteln (Cent bzw. Zentimeter). */
+const komma=h=>Math.floor(h/100)+','+pad(h%100);
+const euro=ct=>komma(ct)+' €';
+function g3Zahl(l){
+  const k=pick(l===1?[0,1,2,3]:l===2?[0,1,3,4,5]:[1,3,4,5]),ST=['Einer','Zehner','Hunderter'];
+  if(k===0){const n=R(100,999),i=R(0,2),d=Math.floor(n/10**i)%10;
+    return {q:`Welche Ziffer steht in der Zahl <b>${n}</b> an der <b>${ST[i]}</b>-Stelle?`,a:d,sol:`Von rechts gezählt: Einer, Zehner, Hunderter. An der ${ST[i]}-Stelle steht die ${d}.`};}
+  if(k===1){
+    if(l===3){const h=R(1,8),z=R(10,19),e=R(0,9),n=h*100+z*10+e;
+      return {q:`Schreibe als Zahl: <b>${h} H ${z} Z ${e} E</b>`,a:n,sol:`${z} Zehner sind 1 Hunderter und ${z-10} Zehner. Also ${h+1} H ${z-10} Z ${e} E = ${n}.`};}
+    const h=R(1,9),z=l===1?R(1,9):R(0,9),e=l===1?R(1,9):pick([0,R(1,9)]),n=h*100+z*10+e;
+    const parts=[[h,'H'],[z,'Z'],[e,'E']].filter(x=>x[0]>0);
+    return {q:`Schreibe als Zahl: <b>${(l===2?shuffle(parts):parts).map(x=>x[0]+' '+x[1]).join(' ')}</b>`,a:n,
+      sol:`H = Hunderter, Z = Zehner, E = Einer. ${h} Hunderter, ${z} Zehner, ${e} Einer: ${n}.`+(z&&e?'':' Eine leere Stelle bekommt eine 0.')};}
+  if(k===2){const n=R(101,998);
+    return R(0,1)?{q:`Wie heißt der <b>Nachfolger</b> von <b>${n}</b>?`,a:n+1,sol:`Der Nachfolger ist um 1 größer: ${n} + 1 = ${n+1}.`}
+                 :{q:`Wie heißt der <b>Vorgänger</b> von <b>${n}</b>?`,a:n-1,sol:`Der Vorgänger ist um 1 kleiner: ${n} − 1 = ${n-1}.`};}
+  if(k===3){
+    if(l<3){const h=R(1,9),a=h*100+R(0,99);let b;
+      if(l===1){do{b=R(1,9)*100+R(0,99);}while(Math.floor(b/100)===h);}else{do{b=h*100+R(0,99);}while(b===a);}
+      const s=a<b?'<':'>';
+      return {q:`Welches Zeichen passt? <b>${a} ? ${b}</b>`,type:'choice',choices:['<','=','>'],a:s,sol:`Vergleiche zuerst die Hunderter, dann die Zehner, dann die Einer. ${a} ${s} ${b}.`};}
+    const h=R(1,9),z=R(1,9),n=h*100+z*10,b=n+pick([-10,-1,0,0,1,10]),s=n<b?'<':n>b?'>':'=';
+    return {q:`Welches Zeichen passt? <b>${h*100} + ${z*10} ? ${b}</b>`,type:'choice',choices:['<','=','>'],a:s,sol:`Erst ausrechnen: ${h*100} + ${z*10} = ${n}. Also ${n} ${s} ${b}.`};}
+  if(k===4){const hu=R(0,1)===1,p=hu?100:10;let n;do{n=R(101,989);}while(n%p===0);const lo=Math.floor(n/p)*p;
+    return {q:`Zwischen welchen <b>Nachbar${hu?'hundertern':'zehnern'}</b> liegt <b>${n}</b>?`,type:'pair',ph:'kleiner | größer',a:[lo,lo+p],fa:`${lo} und ${lo+p}`,
+      sol:`${n} liegt zwischen ${lo} und ${lo+p}.`};}
+  const d=pick(l===2?[5,10,20,50,100]:[4,6,12,15,25,30]),auf=R(0,1)===1,s=auf?R(0,1000-5*d):R(5*d,1000);
+  const seq=[0,1,2,3].map(i=>s+(auf?i:-i)*d),a=s+(auf?4:-4)*d;
+  return {q:`Wie geht es weiter? <b>${seq.join(', ')}, …</b>`,a,sol:`Es kommt immer ${d} ${auf?'dazu':'weg'}: ${seq[3]} ${auf?'+':'−'} ${d} = ${a}.`};
+}
+/* Zahlenstrahl: Pfeil zeigt auf eine Zahl. Stufe 1 in Hundertern, 2 in Zehnern, 3 in Fünfern. */
+function strahlSvg(lo,hi,step,mark,labels){
+  const L=16,Rr=284,y=46,sc=(Rr-L)/(hi-lo),X=v=>(L+(v-lo)*sc).toFixed(1);
+  let g=`<line x1="${L}" y1="${y}" x2="${Rr}" y2="${y}" stroke="var(--ink)" stroke-width="2"/>`;
+  /* Lange Striche bei 50ern (bzw. 500ern), mittlere bei Zehnern, wenn in Fünfern geteilt ist. */
+  for(let v=lo;v<=hi;v+=step){const big=v%(step===100?500:50)===0,h=big?11:step===5&&v%10===0?8:5;
+    g+=`<line x1="${X(v)}" y1="${y-h}" x2="${X(v)}" y2="${y+h}" stroke="var(--ink)" stroke-width="${big?2:1}"/>`;}
+  labels.forEach(v=>{g+=`<text x="${X(v)}" y="${y+28}" font-size="13" text-anchor="middle" fill="var(--ink)">${v}</text>`;});
+  g+=`<path d="M${X(mark)} ${y-13} l-7 -14 h14 z" fill="var(--accent)"/>`;
+  return `<svg viewBox="0 0 300 84" role="img" aria-label="Zahlenstrahl">${g}</svg>`;
+}
+function g3Strahl(l){
+  let lo,step,mark,labels;
+  if(l===1){lo=0;step=100;mark=R(1,9)*100;labels=[0,500,1000];}
+  else if(l===2){lo=R(0,9)*100;step=10;mark=lo+R(1,9)*10;labels=[lo,lo+50,lo+100];}
+  else{lo=R(0,9)*100;step=5;do{mark=lo+R(1,19)*5;}while(mark%50===0);labels=[lo,lo+50,lo+100];}
+  const hi=l===1?1000:lo+100,n=(mark-lo)/step;
+  return {q:'Welche Zahl zeigt der Pfeil?',svg:strahlSvg(lo,hi,step,mark,labels),a:mark,
+    sol:`Von Strich zu Strich sind es ${step}. Von ${lo} aus ${n} ${n===1?'Strich':'Striche'} weiter: ${lo} + ${n} · ${step} = ${mark}.`};
+}
+function g3Runden(l){
+  if(l===3&&R(0,1)){const ct=R(1,9)*100+R(1,99),a=Math.round(ct/100),d=Math.floor(ct%100/10);
+    return {q:`Runde <b>${euro(ct)}</b> auf ganze Euro.`,a,unit:'€',sol:`Schau auf die erste Ziffer nach dem Komma: ${d}. Bei 0 bis 4 wird abgerundet, bei 5 bis 9 aufgerundet: ${a} €.`};}
+  const p=l===1?10:pick([10,100]);let n;do{n=R(101,994);}while(n%p===0);
+  const a=Math.round(n/p)*p,d=Math.floor(n/(p/10))%10,nm=p===10?'Zehner':'Hunderter';
+  return {q:`Runde <b>${n}</b> auf ${nm}.`,a,sol:`Schau auf die Ziffer rechts neben der ${nm}-Stelle: ${d}. Bei 0 bis 4 wird abgerundet, bei 5 bis 9 aufgerundet: ${a}.`};
+}
+function g3Plus(l){
+  const k=R(0,2),pl=R(0,1)===1;
+  const P3=(a,b,hint)=>({q:`<b>${a} + ${b}</b> = ?`,a:a+b,sol:(hint?hint+' ':'')+`${a} + ${b} = ${a+b}.`});
+  const M3=(a,b,hint)=>({q:`<b>${a} − ${b}</b> = ?`,a:a-b,sol:(hint?hint+' ':'')+`${a} − ${b} = ${a-b}. Probe: ${a-b} + ${b} = ${a}.`});
+  if(l===1){
+    if(k===0){const a=R(1,8)*100,b=R(1,9-a/100)*100;
+      return pl?P3(a,b,`Wie ${a/100} + ${b/100}, nur mit Hundertern.`):M3(a+b,b,`Wie ${(a+b)/100} − ${b/100}, nur mit Hundertern.`);}
+    if(k===1){const h=R(1,9)*100,z=R(1,8),z2=R(1,9-z),t='Die Hunderter bleiben, rechne nur mit den Zehnern.';
+      return pl?P3(h+z*10,z2*10,t):M3(h+(z+z2)*10,z2*10,t);}
+    const hz=R(10,99)*10,e=R(1,8),e2=R(1,9-e),t='Nur die Einer ändern sich.';
+    return pl?P3(hz+e,e2,t):M3(hz+e+e2,e2,t);
+  }
+  if(l===2){
+    if(k===0){
+      if(pl){const a=R(100,880);let b=R(11,Math.min(99,999-a));if(b%10===0)b--;const z=b-b%10;
+        return P3(a,b,`Erst die Zehner: ${a} + ${z} = ${a+z}, dann die Einer: ${a+z} + ${b%10} = ${a+b}.`);}
+      const a=R(150,999);let b=R(11,99);if(b%10===0)b--;const z=b-b%10;
+      return M3(a,b,`Erst die Zehner: ${a} − ${z} = ${a-z}, dann die Einer: ${a-z} − ${b%10} = ${a-b}.`);}
+    if(k===1){const h=R(1,8),z=R(5,9),z2=R(11-z,9),r=z+z2-10,H=(h+1)*100;
+      return pl?P3(h*100+z*10,z2*10,`Über den Hunderter: ${h*100+z*10} + ${(10-z)*10} = ${H}, dann noch ${r*10} dazu.`)
+               :M3(H+r*10,z2*10,`Erst zum Hunderter: ${H+r*10} − ${r*10} = ${H}, dann noch ${(z2-r)*10} weg.`);}
+    let a;do{a=R(101,989);}while(a%100===0);const t=Math.ceil(a/100)*100;
+    return {q:`<b>${a} + ? = ${t}</b>`,a:t-a,ph:'fehlende Zahl',sol:`Rechne ${t} − ${a} = ${t-a}. Probe: ${a} + ${t-a} = ${t}.`};
+  }
+  /* Stufe 3: dreistellig plus/minus glatte Zehner über den Hunderter (schriftlich: eigenes Thema) */
+  if(k<2){let b=R(12,25)*10;if(b%100===0)b+=10;const hb=b-b%100;
+    if(pl){const a=R(120,740);return P3(a,b,`Erst die Hunderter: ${a} + ${hb} = ${a+hb}, dann die Zehner: ${a+hb} + ${b%100} = ${a+b}.`);}
+    const a=R(300,999);return M3(a,b,`Erst die Hunderter: ${a} − ${hb} = ${a-hb}, dann die Zehner: ${a-hb} − ${b%100} = ${a-b}.`);}
+  if(pl){const a=R(101,999);return {q:`<b>${a} + ? = 1000</b>`,a:1000-a,ph:'fehlende Zahl',sol:`Ergänzen bis 1000: 1000 − ${a} = ${1000-a}. Probe: ${a} + ${1000-a} = 1000.`};}
+  const b=R(101,499),c=R(101,499);
+  return {q:`<b>? − ${b} = ${c}</b>`,a:b+c,ph:'fehlende Zahl',sol:`Rechne rückwärts mit Plus: ${c} + ${b} = ${b+c}. Probe: ${b+c} − ${b} = ${c}.`};
+}
+/* Mal und Geteilt wie im Buch: Stufe 1 Kernaufgaben (mal 1, 2, 5, 10), Stufe 2 ganzes Einmaleins
+   und verwandte Aufgaben, Stufe 3 Teilen mit Rest, Vielfache, Zehner-Einmaleins. */
+function g3Mal(l){
+  const k=R(0,2);
+  if(l===1){const a=pick([1,2,5,10]),b=R(1,10),c=a*b,[x,y]=R(0,1)?[a,b]:[b,a];
+    if(k===0)return {q:`<b>${x} · ${y}</b> = ?`,a:c,sol:`Kernaufgabe: ${x} · ${y} = ${c}.`};
+    if(k===1)return {q:`<b>${c} : ${a}</b> = ?`,a:b,sol:`${c} : ${a} = ${b}, denn ${b} · ${a} = ${c}.`};
+    return {q:`<b>? · ${a} = ${c}</b>`,a:b,ph:'fehlende Zahl',sol:`Rechne rückwärts: ${c} : ${a} = ${b}. Also ${b} · ${a} = ${c}.`};}
+  if(l===2){
+    if(k===0){const kern=pick([2,5,10]),z=R(3,9),n=kern===10?9:kern+pick([-1,1]),mehr=n>kern;
+      return {q:`Du weißt: <b>${kern} · ${z} = ${kern*z}</b>. Wie viel ist <b>${n} · ${z}</b>?`,a:n*z,
+        sol:`${n} · ${z} ist ein ${z} ${mehr?'mehr':'weniger'} als ${kern} · ${z}: ${kern*z} ${mehr?'+':'−'} ${z} = ${n*z}.`};}
+    const a=R(2,10),b=R(2,10),c=a*b;
+    if(k===1)return {q:`<b>${c} : ${b}</b> = ?`,a:a,sol:`${c} : ${b} = ${a}, denn ${a} · ${b} = ${c}.`};
+    return {q:`<b>${a} · ? = ${c}</b>`,a:b,ph:'fehlende Zahl',sol:`Rechne rückwärts: ${c} : ${a} = ${b}. Also ${a} · ${b} = ${c}.`};}
+  if(k===0){const b=R(3,9),q=R(2,9),r=R(1,b-1),c=b*q+r;
+    return {q:`<b>${c} : ${b}</b> = ? Rest ?`,type:'pair',ph:'Ergebnis | Rest',a:[q,r],fa:`${q} Rest ${r}`,
+      sol:`${q} · ${b} = ${b*q}, bis ${c} fehlen noch ${r}. Also ${q} Rest ${r}.`};}
+  if(k===1){const d=R(3,9),richtig=d*R(2,9),falsch=new Set();
+    while(falsch.size<3){const x=R(10,90);if(x%d!==0)falsch.add(x);}
+    return {q:`Welche Zahl ist ein <b>Vielfaches von ${d}</b>?`,type:'choice',choices:shuffle([richtig,...falsch].map(String)),a:String(richtig),
+      sol:`${richtig} = ${richtig/d} · ${d}. Die anderen Zahlen kommen in der ${d}er-Reihe nicht vor.`};}
+  const a=R(2,9),z=R(2,9)*10,[x,y]=R(0,1)?[a,z]:[z,a];
+  return {q:`<b>${x} · ${y}</b> = ?`,a:a*z,sol:`Rechne ${a} · ${z/10} = ${a*z/10} und hänge eine Null an: ${a*z}.`};
+}
+
+/* Schriftlich addieren und subtrahieren, untereinander dargestellt.
+   Stufe 1 ohne Übertrag, Stufe 2 mit einem, Stufe 3 mit zwei Überträgen (wie im Buch). */
+const schriftHtml=(a,b,op)=>`<div class="schrift"><span>  ${String(a).padStart(3)}</span><span class="u">${op} ${String(b).padStart(3)}</span></div>`;
+const stellen=n=>[n%10,Math.floor(n/10)%10,Math.floor(n/100)];
+function uebertraege(a,b,minus){let c=0,n=0;const x=stellen(a),y=stellen(b);
+  for(let i=0;i<3;i++){c=minus?(x[i]-y[i]-c<0?1:0):(x[i]+y[i]+c>=10?1:0);n+=c;}return n;}
+function g3SchriftAdd(l){
+  const soll=l-1;let a,b,t=0;do{a=R(100,899);b=R(100,999-a);t++;}while(uebertraege(a,b,false)!==soll&&t<1000);
+  return {q:`Rechne schriftlich:${schriftHtml(a,b,'+')}`,a:a+b,
+    sol:`Von rechts: erst die Einer, dann die Zehner, dann die Hunderter.${soll?` Ergibt eine Spalte 10 oder mehr, schreibst du den Übertrag klein in die nächste Spalte (hier ${soll===1?'ein Übertrag':'zwei Überträge'}).`:' Hier gibt es keinen Übertrag.'} ${a} + ${b} = ${a+b}.`};
+}
+function g3SchriftSub(l){
+  const soll=l-1;let a,b,t=0;
+  do{a=l===3&&R(0,1)?R(2,9)*100+R(0,9):R(200,999);b=R(100,a-1);t++;}while(uebertraege(a,b,true)!==soll&&t<1000);
+  return {q:`Rechne schriftlich:${schriftHtml(a,b,'−')}`,a:a-b,
+    sol:`Von rechts: erst die Einer, dann die Zehner, dann die Hunderter.${soll?` Ist die untere Ziffer größer als die obere, brauchst du einen Übertrag (hier ${soll===1?'einer':'zwei'}).`:' Hier gibt es keinen Übertrag.'} ${a} − ${b} = ${a-b}. Probe: ${a-b} + ${b} = ${a}.`};
+}
+function g3Ueberschlag(){
+  const r=n=>Math.round(n/100)*100,plus=R(0,1)===1;let a,b;
+  do{a=R(110,890);b=R(110,890);if(!plus&&a<b)[a,b]=[b,a];}while(plus?r(a)+r(b)>1000:r(a)-r(b)<100);
+  const op=plus?'+':'−',res=plus?r(a)+r(b):r(a)-r(b),genau=plus?a+b:a-b;
+  return {q:`Überschlage: Runde beide Zahlen auf Hunderter und rechne damit.<br><b>${a} ${op} ${b}</b> ≈ ?`,a:res,
+    sol:`${a} ≈ ${r(a)} und ${b} ≈ ${r(b)}. ${r(a)} ${op} ${r(b)} = ${res}. Das genaue Ergebnis ${genau} liegt in der Nähe.`};
+}
+function g3Spiegel(l){
+  let n;do{n=R(102,989);}while(n%10===0||n%10===Math.floor(n/100));
+  const m=+String(n).split('').reverse().join('');
+  if(l===1)return {q:`Wie heißt die <b>Spiegelzahl</b> von <b>${n}</b>? (die Ziffern rückwärts gelesen)`,a:m,sol:`Rückwärts gelesen: ${m}.`};
+  const g=Math.max(n,m),k=Math.min(n,m);
+  return {q:`Die Spiegelzahl von <b>${n}</b> ist ${m}. Rechne die größere minus die kleinere Zahl.`,a:g-k,
+    sol:`${g} − ${k} = ${g-k}. Spannend: Das Ergebnis ist immer ein Vielfaches von 99.`};
+}
+
+/* Größen, nach Kapiteln getrennt (Geld, Längen, Gewichte, Zeit, Größenvorstellungen). */
+function g3Geld(l){
+  if(l===1){if(R(0,1)){const n=R(2,9);return {q:`${n} € = ? ct`,a:n*100,unit:'ct',sol:`1 € = 100 ct, also ${n} € = ${n*100} ct.`};}
+    const n=R(1,9),m=R(1,19)*5;return {q:`${n} € ${m} ct = ? ct`,a:n*100+m,unit:'ct',sol:`${n} € = ${n*100} ct, dazu ${m} ct: ${n*100+m} ct.`};}
+  if(l===2){const ct=R(1,9)*100+R(1,19)*5;
+    if(R(0,1))return {q:`<b>${euro(ct)}</b> = ? ct`,a:ct,unit:'ct',sol:`Vor dem Komma stehen die Euro, dahinter die Cent: ${Math.floor(ct/100)} € ${ct%100} ct = ${ct} ct.`};
+    return {q:`<b>${ct} ct</b> = ? €`,type:'geld',a:ct,unit:'€',ph:'z. B. 2,35',sol:`100 ct = 1 €. ${ct} ct sind ${Math.floor(ct/100)} € und ${ct%100} ct, also ${euro(ct)}.`};}
+  const k=R(0,2);
+  if(k===0){const pay=pick([5,10,20]),preis=R(1,pay-2)*100+R(1,19)*5,r=pay*100-preis,E=Math.ceil(preis/100);
+    return {q:`Du kaufst etwas für <b>${euro(preis)}</b> und bezahlst mit einem <b>${pay}-€-Schein</b>. Wie viel Rückgeld bekommst du?`,type:'geld',a:r,unit:'€',ph:'z. B. 2,35',
+      sol:`Erst bis zum vollen Euro: ${euro(preis)} + ${100-preis%100} ct = ${E},00 €. Dann bis ${pay},00 € fehlen noch ${pay-E} €. Rückgeld: ${euro(r)}.`};}
+  if(k===1){const x=R(1,4)*100+R(1,19)*5,y=R(1,4)*100+R(1,19)*5;
+    return {q:`<b>${euro(x)} + ${euro(y)}</b> = ?`,type:'geld',a:x+y,unit:'€',ph:'z. B. 2,35',sol:`Rechne in Cent: ${x} ct + ${y} ct = ${x+y} ct = ${euro(x+y)}.`};}
+  const g=R(5,9)*100+R(0,19)*5,s=R(1,4)*100+R(1,19)*5;
+  return {q:`<b>${euro(g)} − ${euro(s)}</b> = ?`,type:'geld',a:g-s,unit:'€',ph:'z. B. 2,35',sol:`Rechne in Cent: ${g} ct − ${s} ct = ${g-s} ct = ${euro(g-s)}.`};
+}
+function g3Laenge(l){
+  if(l===1){const [big,small,f]=pick([['m','cm',100],['cm','mm',10],['km','m',1000]]),n=R(2,f===1000?3:9);
+    return R(0,1)?{q:`${n} ${big} = ? ${small}`,a:n*f,unit:small,sol:`1 ${big} = ${f} ${small}, also ${n} · ${f} = ${n*f} ${small}.`}
+                 :{q:`${n*f} ${small} = ? ${big}`,a:n,unit:big,sol:`1 ${big} = ${f} ${small}. ${n*f} : ${f} = ${n}, also ${n} ${big}.`};}
+  const k=R(0,2);
+  if(l===2){
+    if(k===0){const n=R(1,4),m=R(1,99);return {q:`${n} m ${m} cm = ? cm`,a:n*100+m,unit:'cm',sol:`${n} m = ${n*100} cm, dazu ${m} cm: ${n*100+m} cm.`};}
+    if(k===1){const n=R(1,9),m=R(1,9);return {q:`${n} cm ${m} mm = ? mm`,a:n*10+m,unit:'mm',sol:`${n} cm = ${n*10} mm, dazu ${m} mm: ${n*10+m} mm.`};}
+    const x=R(1,19)*50;return {q:`<b>1 km − ${x} m</b> = ? m`,a:1000-x,unit:'m',sol:`1 km = 1000 m. 1000 − ${x} = ${1000-x} m.`};}
+  const h=R(1,4)*100+R(1,99);
+  if(k===0)return {q:`<b>${komma(h)} m</b> = ? cm`,a:h,unit:'cm',sol:`Vor dem Komma stehen die Meter, dahinter die Zentimeter: ${Math.floor(h/100)} m ${h%100} cm = ${h} cm.`};
+  if(k===1)return {q:`<b>${h} cm</b> = ? m`,type:'geld',a:h,unit:'m',ph:'z. B. 1,35',sol:`100 cm = 1 m. ${h} cm sind ${Math.floor(h/100)} m und ${h%100} cm, also ${komma(h)} m.`};
+  const L=R(2,4),c=R(3,19)*5;
+  return {q:`Ein Brett ist ${L} m lang. Davon werden ${c} cm abgesägt. Wie viele Zentimeter sind noch übrig?`,a:L*100-c,unit:'cm',sol:`${L} m = ${L*100} cm. ${L*100} − ${c} = ${L*100-c} cm.`};
+}
+const GEWICHTE=[500,200,100,50,20,10,5];
+function g3Gewicht(l){
+  if(l===1){const n=R(1,3);
+    return R(0,1)?{q:`${n} kg = ? g`,a:n*1000,unit:'g',sol:`1 kg = 1000 g, also ${n} kg = ${n*1000} g.`}
+                 :{q:`${n*1000} g = ? kg`,a:n,unit:'kg',sol:`1000 g = 1 kg, also ${n*1000} g = ${n} kg.`};}
+  if(l===2){
+    if(R(0,1)){const n=R(1,2),m=R(1,19)*50;return {q:`${n} kg ${m} g = ? g`,a:n*1000+m,unit:'g',sol:`${n} kg = ${n*1000} g, dazu ${m} g: ${n*1000+m} g.`};}
+    const s=shuffle(GEWICHTE).slice(0,3).sort((x,y)=>y-x);
+    return {q:`Auf der Waage liegen die Gewichtsstücke <b>${s.join(' g, ')} g</b>. Wie schwer ist das zusammen?`,a:s[0]+s[1]+s[2],unit:'g',sol:`${s.join(' + ')} = ${s[0]+s[1]+s[2]} g.`};}
+  if(R(0,1)){const x=R(1,19)*50;return {q:`<b>1 kg − ${x} g</b> = ? g`,a:1000-x,unit:'g',sol:`1 kg = 1000 g. 1000 − ${x} = ${1000-x} g.`};}
+  const p=R(2,8)*50,q=R(2,8)*50;
+  return {q:`In einer Tüte sind schon ${p} g Äpfel und ${q} g Birnen. Wie viel Gramm fehlen noch bis 1 kg?`,a:1000-p-q,unit:'g',
+    sol:`Zusammen ${p} + ${q} = ${p+q} g. Bis 1000 g fehlen ${1000-p-q} g.`};
+}
+function g3Zeit(l){
+  if(l===1){const k=R(0,2);
+    if(k===0){const n=R(1,3);return {q:`${n} h = ? min`,a:n*60,unit:'min',sol:`1 h = 60 min, also ${n} · 60 = ${n*60} min.`};}
+    if(k===1){const n=R(1,3);return {q:`${n} min = ? s`,a:n*60,unit:'s',sol:`1 min = 60 s, also ${n} · 60 = ${n*60} s.`};}
+    const [w,a]=pick([['eine Viertelstunde',15],['eine halbe Stunde',30],['eine Dreiviertelstunde',45]]);
+    return {q:`Wie viele Minuten hat ${w}?`,a,unit:'min',sol:`Eine Stunde hat 60 Minuten. ${w[0].toUpperCase()+w.slice(1)} hat ${a} Minuten.`};}
+  if(l===2){
+    if(R(0,1)){const h=R(1,2),m=R(1,11)*5;return {q:`${h} h ${m} min = ? min`,a:h*60+m,unit:'min',sol:`${h} h = ${h*60} min, dazu ${m} min: ${h*60+m} min.`};}
+    const s=R(7*12,17*12)*5,d=R(7,55);
+    return {q:`Wie viele Minuten sind es von <b>${timeStr(s)} Uhr</b> bis <b>${timeStr(s+d)} Uhr</b>?`,a:d,unit:'min',sol:`Zähle von ${timeStr(s)} bis ${timeStr(s+d)}: ${d} Minuten. Tipp: erst bis zur nächsten vollen Viertelstunde oder Stunde.`};}
+  const s=R(13*12,18*12)*5,d=R(4,20)*5,[w,er]=pick([['Das Training','es'],['Der Film','er'],['Die Busfahrt','sie']]);
+  if(R(0,1))return {q:`${w} beginnt um <b>${timeStr(s)} Uhr</b> und dauert <b>${d} Minuten</b>. Wann ist ${er} zu Ende? (Schreibweise 16:45)`,type:'time',ph:'hh:mm',a:timeStr(s+d),
+    sol:`${timeStr(s)} + ${d} min = ${timeStr(s+d)} Uhr. Rechne erst bis zur vollen Stunde, dann weiter.`};
+  return {q:`${w} endet um <b>${timeStr(s+d)} Uhr</b> und hat <b>${d} Minuten</b> gedauert. Wann hat ${er} angefangen? (Schreibweise 16:45)`,type:'time',ph:'hh:mm',a:timeStr(s),
+    sol:`Rechne rückwärts: ${timeStr(s+d)} − ${d} min = ${timeStr(s)} Uhr.`};
+}
+const VORSTELLUNG=[['Eine Tafel Schokolade wiegt etwa …',['100 g','100 kg','1 g'],'100 g'],['Ein Apfel wiegt etwa …',['150 g','150 kg','15 kg'],'150 g'],
+  ['Eine Packung Mehl wiegt …',['1 kg','1 g','100 kg'],'1 kg'],['Ein Erwachsener wiegt etwa …',['70 kg','70 g','7 kg'],'70 kg'],
+  ['Ein Bleistift ist etwa … lang.',['17 cm','17 m','17 mm'],'17 cm'],['Eine Ameise ist etwa … lang.',['5 mm','5 cm','5 m'],'5 mm'],
+  ['Ein Klassenzimmer ist etwa … lang.',['8 m','8 cm','8 km'],'8 m'],['Eine Tür ist etwa … hoch.',['2 m','2 cm','20 m'],'2 m'],
+  ['An einem Wandertag läuft man etwa …',['10 km','10 m','1000 km'],'10 km'],['Ein Fußballspiel dauert …',['90 min','90 s','9 h'],'90 min'],
+  ['Zähneputzen dauert etwa …',['3 min','3 h','3 s'],'3 min'],['Ein Atemzug dauert etwa …',['4 s','4 min','4 h'],'4 s'],['Ein Schultag dauert etwa …',['5 h','5 min','50 h'],'5 h']];
+function g3Vorstellung(){
+  const [q,c,a]=pick(VORSTELLUNG);
+  return {q:`Was passt? ${q}`,type:'choice',choices:shuffle(c),a,sol:`Am besten passt ${a}. Die anderen Angaben sind viel zu groß oder viel zu klein.`};
+}
+
+/* Flächen und Körper, Achsensymmetrie. */
+function g3Koerper(l){
+  const L1=[
+    ()=>{const [k,w,n]=pick([['Würfel','Ecken',8],['Würfel','Kanten',12],['Würfel','Flächen',6],['Quader','Ecken',8],['Quader','Kanten',12],['Quader','Flächen',6]]);
+      return {q:`Wie viele <b>${w}</b> hat ein ${k}?`,a:n,sol:{Ecken:'4 Ecken oben und 4 unten: 8.',Kanten:'4 Kanten oben, 4 unten und 4 senkrechte: 12.',Flächen:'Oben, unten, vorne, hinten, links und rechts: 6.'}[w]};},
+    ()=>({q:'Welcher Körper kann rollen?',type:'choice',choices:shuffle(['Kugel','Würfel','Quader','Pyramide']),a:'Kugel',sol:'Die Kugel hat keine Ecken und keine Kanten und ist rundherum gewölbt. Deshalb rollt sie.'}),
+    ()=>({q:'Welche Form hat jede Fläche eines Würfels?',type:'choice',choices:shuffle(['Quadrat','Dreieck','Kreis']),a:'Quadrat',sol:'Ein Würfel hat 6 gleich große Quadrate als Flächen.'})
+  ];
+  const L2=[
+    ()=>{const [w,n,why]=pick([['Ecken',5,'4 Ecken unten und die Spitze: 5.'],['Kanten',8,'4 Kanten an der Grundfläche und 4 hinauf zur Spitze: 8.'],['Flächen',5,'Das Quadrat unten und 4 Dreiecke: 5.']]);
+      return {q:`Wie viele <b>${w}</b> hat eine Pyramide mit quadratischer Grundfläche?`,a:n,sol:why};},
+    ()=>pick([{q:'Für das Kantenmodell eines Würfels brauchst du Stäbe für die Kanten. Wie viele Stäbe?',a:12,sol:'Ein Würfel hat 12 Kanten, also 12 Stäbe.'},
+      {q:'Für das Kantenmodell eines Würfels verbindest du die Stäbe mit Knetkugeln an den Ecken. Wie viele Knetkugeln?',a:8,sol:'Ein Würfel hat 8 Ecken, also 8 Knetkugeln.'}]),
+    ()=>({q:'Aus wie vielen Quadraten besteht ein Würfelnetz?',a:6,sol:'Ein Würfel hat 6 Flächen, also hat sein Netz 6 Quadrate.'}),
+    ()=>{const n=R(1,6);return {q:`Auf einem Spielwürfel ergeben gegenüberliegende Seiten zusammen immer 7. Welche Zahl liegt gegenüber der <b>${n}</b>?`,a:7-n,sol:`7 − ${n} = ${7-n}.`};}
+  ];
+  const L3=[
+    ()=>{const a=R(2,4),b=R(2,4),c=R(2,3);return {q:`Ein Quader wird aus kleinen Würfeln gebaut: ${a} Würfel lang, ${b} Würfel breit und ${c} Würfel hoch. Wie viele Würfel braucht man?`,a:a*b*c,
+      sol:`Eine Schicht hat ${a} · ${b} = ${a*b} Würfel. ${c} Schichten: ${c} · ${a*b} = ${a*b*c}.`};},
+    ()=>{const n=R(1,6);return {q:`Ein Spielwürfel liegt mit der <b>${n}</b> oben. Du kippst ihn <b>zweimal</b> in dieselbe Richtung. Welche Zahl liegt jetzt oben?`,a:7-n,
+      sol:`Nach zweimal Kippen in dieselbe Richtung liegt der Würfel auf dem Kopf. Oben ist jetzt die Gegenseite: 7 − ${n} = ${7-n}.`};},
+    ()=>({q:'Welcher Körper hat genau <b>5 Ecken</b>?',type:'choice',choices:shuffle(['Pyramide','Würfel','Quader','Kugel']),a:'Pyramide',sol:'Die Pyramide mit quadratischer Grundfläche hat 4 Ecken unten und die Spitze: 5.'}),
+    L2[1]
+  ];
+  return pick(l===1?L1:l===2?L2:L3)();
+}
+const SYM=['A','H','M','O','T','U','V','W','X','Y'],NOSYM=['F','G','J','L','N','P','R','S','Z'];
+function g3Sym(l){
+  const ja=()=>{const s=pick(SYM);return {q:'Welcher Buchstabe ist <b>achsensymmetrisch</b>?',type:'choice',choices:shuffle([s,...shuffle(NOSYM).slice(0,3)]),a:s,
+      sol:`Bei ${s} kannst du eine Spiegelachse einzeichnen, dann sind beide Hälften gleich. Bei den anderen Buchstaben geht das nicht.`};};
+  const nein=()=>{const s=pick(NOSYM);return {q:'Welcher Buchstabe ist <b>nicht</b> achsensymmetrisch?',type:'choice',choices:shuffle([s,...shuffle(SYM).slice(0,3)]),a:s,
+      sol:`Bei ${s} findest du keine Spiegelachse. Die anderen Buchstaben kannst du in der Mitte spiegeln.`};};
+  const achsen=()=>{const [f,n,why]=pick(l===2?[['ein Quadrat',4,'Zwei Achsen durch die Seitenmitten und zwei durch die Ecken: 4.'],['ein Rechteck, das kein Quadrat ist',2,'Nur die beiden Mittellinien: 2. Die Diagonalen sind keine Spiegelachsen.']]
+      :[['ein gleichseitiges Dreieck',3,'Von jeder Ecke zur Mitte der gegenüberliegenden Seite: 3.'],['der Buchstabe H',2,'Eine senkrechte und eine waagrechte Achse: 2.'],['der Buchstabe A',1,'Nur die senkrechte Achse in der Mitte: 1.'],['ein Quadrat',4,'Zwei Achsen durch die Seitenmitten und zwei durch die Ecken: 4.']]);
+    return {q:`Wie viele <b>Symmetrieachsen</b> hat ${f}?`,a:n,sol:why};};
+  return pick(l===1?[ja,nein]:[ja,nein,achsen])();
+}
+/* Kästchenfiguren: Flächeninhalt durch Zählen bzw. Malnehmen. */
+function kaestchenSvg(gw,gh,on){const s=22,o=4;let g='';
+  for(let y=0;y<gh;y++)for(let x=0;x<gw;x++){const f=on(x,y);g+=`<rect x="${o+x*s}" y="${o+y*s}" width="${s}" height="${s}" fill="${f?'var(--accent)':'none'}" fill-opacity="${f?'.5':'0'}" stroke="var(--line)"/>`;}
+  return `<svg viewBox="0 0 ${gw*s+2*o} ${gh*s+2*o}" role="img" aria-label="Kästchenfigur" style="max-width:${gw*26}px">${g}</svg>`;}
+function g3Flaeche(l){
+  const k=pick(l===1?[0,2]:l===2?[0,1,2]:[1,2,3]);
+  if(k===0){const a=R(2,6),b=R(2,5);
+    return {q:'Wie viele Kästchen groß ist die blaue Fläche?',svg:kaestchenSvg(a+2,b+2,(x,y)=>x>=1&&x<=a&&y>=1&&y<=b),a:a*b,sol:`${b} Reihen mit je ${a} Kästchen: ${b} · ${a} = ${a*b}.`};}
+  if(k===1){const a=R(4,7),b=R(3,5),c=R(1,a-2),d=R(1,b-1);
+    return {q:'Wie viele Kästchen groß ist die blaue Fläche?',svg:kaestchenSvg(a+2,b+2,(x,y)=>x>=1&&x<=a&&y>=1&&y<=b&&!(x>a-c&&y<=d)),a:a*b-c*d,
+      sol:`Das ganze Rechteck hätte ${b} · ${a} = ${a*b} Kästchen. Oben rechts fehlen ${d} · ${c} = ${c*d}. Also ${a*b} − ${c*d} = ${a*b-c*d}.`};}
+  if(k===2)return pick([{q:'Wie viele <b>rechte Winkel</b> hat ein Rechteck?',a:4,sol:'Alle vier Ecken eines Rechtecks sind rechte Winkel.'},
+    {q:'Wie viele <b>rechte Winkel</b> hat ein Quadrat?',a:4,sol:'Ein Quadrat ist ein besonderes Rechteck: alle vier Ecken sind rechte Winkel.'},
+    {q:'Wie viele <b>Ecken</b> hat ein Sechseck?',a:6,sol:'Der Name verrät es: Ein Sechseck hat 6 Ecken.'},
+    {q:'Wie viele <b>Ecken</b> hat ein Fünfeck?',a:5,sol:'Der Name verrät es: Ein Fünfeck hat 5 Ecken.'},
+    {q:'Ein Dreieck kann höchstens wie viele <b>rechte Winkel</b> haben?',a:1,sol:'Höchstens einen. Zwei rechte Winkel passen in kein Dreieck.'}]);
+  let a,b,c,d;do{a=R(3,8);b=R(3,8);c=R(3,8);d=R(3,8);}while(a*b===c*d);const g=a*b>c*d?'A':'B';
+  return {q:`Rechteck A ist ${a} Kästchen lang und ${b} Kästchen breit. Rechteck B ist ${c} Kästchen lang und ${d} Kästchen breit. Welches hat den <b>größeren Flächeninhalt</b>?`,
+    type:'choice',choices:['A','B'],a:g,sol:`A: ${a} · ${b} = ${a*b} Kästchen. B: ${c} · ${d} = ${c*d} Kästchen. Also ist ${g} größer.`};
+}
+
+function g3Sach(l){
+  const nm=pick(NAMES),nm2=pick(NAMES.filter(x=>x!==nm));
+  const L1=[
+    ()=>{const k=R(2,9),p=R(2,9);return {q:`${nm} kauft ${k} Hefte. Jedes Heft kostet ${p} €. Wie viel muss ${nm} bezahlen?`,a:k*p,unit:'€',sol:`${k} · ${p} € = ${k*p} €.`};},
+    ()=>{const g=R(2,6),m=R(3,9);return {q:`${g*m} Kinder bilden Gruppen. In jeder Gruppe sind ${g} Kinder. Wie viele Gruppen gibt es?`,a:m,sol:`${g*m} : ${g} = ${m}.`};},
+    ()=>{const s=R(30,60),x=R(10,s-5);return {q:`Ein Bus hat ${s} Sitzplätze. ${x} Kinder sitzen schon. Wie viele Plätze sind noch frei?`,a:s-x,sol:`${s} − ${x} = ${s-x}.`};},
+    ()=>{const a=R(12,60),b=R(5,39);return {q:`${nm} hat ${a} Murmeln und gewinnt ${b} dazu. Wie viele Murmeln hat ${nm} jetzt?`,a:a+b,sol:`${a} + ${b} = ${a+b}.`};}
+  ];
+  const L2=[
+    ()=>{const a=R(120,450),b=R(100,400);return {q:`An einer Schule sind ${a} Mädchen und ${b} Jungen. Wie viele Kinder sind das zusammen?`,a:a+b,sol:`${a} + ${b} = ${a+b}.`};},
+    ()=>{const n=R(12,60)*2;return {q:`${nm} hat ${n} Sammelkarten. ${nm2} hat halb so viele. Wie viele Sammelkarten hat ${nm2}?`,a:n/2,sol:`Halb so viele: ${n} : 2 = ${n/2}.`};},
+    ()=>{const p=R(3,9);let k=R(12,29);if(k%10===0)k++;
+      return {q:`Eine Klasse mit ${k} Kindern geht ins Museum. Der Eintritt kostet ${p} € pro Kind. Wie viel kostet der Eintritt für alle?`,a:k*p,unit:'€',
+        sol:`${k} · ${p} € = ${k*p} €. Zerlegen hilft: ${k-k%10} · ${p} = ${(k-k%10)*p} und ${k%10} · ${p} = ${(k%10)*p}.`};},
+    ()=>{const k=R(3,9),n=R(4,9);return {q:`In einer Packung sind ${n} Stifte. ${nm} kauft ${k} Packungen. Wie viele Stifte sind das?`,a:k*n,sol:`${k} · ${n} = ${k*n}.`};}
+  ];
+  const L3=[
+    ()=>{const k=R(2,5),p=R(3,9),g=pick([50,100]);return {q:`${nm} kauft ${k} Bücher zu je ${p} € und bezahlt mit ${g} €. Wie viel Geld bekommt ${nm} zurück?`,a:g-k*p,unit:'€',
+      sol:`Erst der Preis: ${k} · ${p} € = ${k*p} €. Dann das Rückgeld: ${g} € − ${k*p} € = ${g-k*p} €.`};},
+    ()=>{let n;do{n=R(20,59);}while(n%6===0);return {q:`${n} Eier sollen in Schachteln zu je 6 Eiern verpackt werden. Wie viele Schachteln braucht man mindestens?`,a:Math.ceil(n/6),
+      sol:`${n} : 6 = ${Math.floor(n/6)} Rest ${n%6}. Für die restlichen ${n%6} Eier braucht man noch eine Schachtel: ${Math.ceil(n/6)}.`};},
+    ()=>{const r=R(3,6),p=pick([15,20,25]),v=R(10,r*p-10);return {q:`Ein Gärtner pflanzt ${r} Reihen mit je ${p} Salatköpfen. Er verkauft ${v} Salatköpfe. Wie viele bleiben übrig?`,a:r*p-v,
+      sol:`Erst alle: ${r} · ${p} = ${r*p}. Dann ${r*p} − ${v} = ${r*p-v}.`};},
+    ()=>{const k=R(2,4),c=R(3,9)*10,L=R(4,6)*100;return {q:`Ein Seil ist ${L/100} m lang. ${nm} schneidet ${k} Stücke zu je ${c} cm ab. Wie viele Zentimeter bleiben übrig?`,a:L-k*c,unit:'cm',
+      sol:`${L/100} m = ${L} cm. Abgeschnitten: ${k} · ${c} cm = ${k*c} cm. Übrig: ${L} − ${k*c} = ${L-k*c} cm.`};},
+    ()=>{const a=R(150,400),b=R(50,a-50);return {q:`${nm} hat ${a} € gespart. ${nm2} hat ${b} € weniger. Wie viel Geld haben beide zusammen?`,a:2*a-b,unit:'€',
+      sol:`${nm2} hat ${a} − ${b} = ${a-b} €. Zusammen: ${a} + ${a-b} = ${2*a-b} €.`};},
+    L2[2]
+  ];
+  return pick(l===1?L1:l===2?L2:L3)();
+}
+function g3Zufall(l){
+  const C=['sicher','möglich','unmöglich'],k=R(0,l===1?1:2);
+  if(k===0){const [w,a,why]=pick([['eine 7','unmöglich','Ein Spielwürfel hat nur die Zahlen 1 bis 6.'],['eine Zahl kleiner als 7','sicher','Jede Zahl auf dem Würfel ist kleiner als 7.'],
+      ['eine 6','möglich','Die 6 kann kommen, muss aber nicht.'],['eine gerade Zahl','möglich','2, 4 und 6 sind gerade, 1, 3 und 5 nicht.'],['eine 0','unmöglich','Auf einem Spielwürfel gibt es keine 0.'],
+      ['eine Zahl größer als 0','sicher','Alle Zahlen von 1 bis 6 sind größer als 0.']]);
+    return {q:`Du würfelst einmal mit einem Spielwürfel (1 bis 6). Du würfelst <b>${w}</b>. Das ist …`,type:'choice',choices:C,a,sol:`${why} Also: ${a}.`};}
+  if(k===1){const r=R(2,6),b=pick([0,R(2,6)]),[f,n]=pick([['rote',r],['blaue',b],['grüne',0]]),a=n===0?'unmöglich':n===r+b?'sicher':'möglich';
+    return {q:`In einem Säckchen sind ${r} rote${b?` und ${b} blaue`:''} Kugeln. Du ziehst ohne hinzusehen eine Kugel. Eine <b>${f} Kugel</b> zu ziehen ist …`,type:'choice',choices:C,a,
+      sol:n===0?`Im Säckchen ist keine ${f} Kugel. Das ist unmöglich.`:a==='sicher'?`Alle Kugeln sind ${f.slice(0,-1)}. Das ist sicher.`:`Es gibt ${f} Kugeln, aber auch andere. Das ist möglich.`};}
+  const fs=l===3?['rote','blaue','gelbe']:['rote','blaue'];let n;do{n=fs.map(()=>R(2,8));}while(new Set(n).size<n.length);
+  const mx=n.indexOf(Math.max(...n)),list=fs.map((f,i)=>`${n[i]} ${f}`).join(', ').replace(/, ([^,]*)$/,' und $1');
+  return {q:`In einem Säckchen sind ${list} Kugeln. Du ziehst ohne hinzusehen eine Kugel. Welche Farbe ziehst du <b>am wahrscheinlichsten</b>?`,type:'choice',
+    choices:fs.map(f=>f.slice(0,-1)),a:fs[mx].slice(0,-1),sol:`Von der Farbe ${fs[mx].slice(0,-1)} gibt es die meisten Kugeln (${n[mx]}). Deshalb ist sie am wahrscheinlichsten.`};
+}
+
+/* Kombinieren mit dem Baumdiagramm. */
+function g3Kombi(l){
+  const nm=pick(NAMES);
+  if(l===1){const a=R(2,3),b=R(2,4);return {q:`${nm} hat ${a} T-Shirts und ${b} Hosen. Wie viele verschiedene Kombinationen aus einem T-Shirt und einer Hose gibt es?`,a:a*b,
+    sol:`Zu jedem der ${a} T-Shirts passen ${b} Hosen. Im Baumdiagramm: ${a} Äste mit je ${b} Zweigen, also ${a} · ${b} = ${a*b}.`};}
+  if(l===2)return pick([
+    ()=>{const s=R(3,6);return {q:`In der Eisdiele gibt es ${s} Sorten. Du nimmst eine Kugel, entweder in der Waffel oder im Becher. Wie viele Möglichkeiten gibt es?`,a:2*s,
+      sol:`Waffel oder Becher sind 2 Möglichkeiten, dazu je ${s} Sorten: 2 · ${s} = ${2*s}.`};},
+    ()=>{const v=R(2,3),h=R(2,4);return {q:`Zum Frühstück gibt es ${v} Getränke und ${h} Brotsorten. Wie viele verschiedene Frühstücke aus einem Getränk und einem Brot gibt es?`,a:v*h,
+      sol:`Zu jedem der ${v} Getränke passen ${h} Brotsorten: ${v} · ${h} = ${v*h}.`};}])();
+  return pick([
+    ()=>{const b=R(2,3),c=R(2,3);return {q:`Ein Menü besteht aus Vorspeise, Hauptgericht und Nachtisch. Es gibt 2 Vorspeisen, ${b} Hauptgerichte und ${c} Nachtische. Wie viele verschiedene Menüs gibt es?`,a:2*b*c,
+      sol:`Das Baumdiagramm verzweigt sich dreimal: 2 · ${b} · ${c} = ${2*b*c}.`};},
+    ()=>({q:'Du hast die Ziffernkarten 1, 2 und 3. Wie viele verschiedene dreistellige Zahlen kannst du legen? Jede Karte nur einmal.',a:6,
+      sol:'Für die erste Stelle 3 Karten, dann noch 2, dann 1: 3 · 2 · 1 = 6 (123, 132, 213, 231, 312, 321).'}),
+    ()=>{const d=R(3,4);return {q:`Du hast die Ziffernkarten ${[1,2,3,4].slice(0,d).join(', ')}. Wie viele verschiedene zweistellige Zahlen kannst du legen? Jede Karte nur einmal.`,a:d*(d-1),
+      sol:`Für die Zehnerstelle ${d} Karten, für die Einerstelle danach noch ${d-1}: ${d} · ${d-1} = ${d*(d-1)}.`};}])();
+}
+/* Augensummen mit zwei Spielwürfeln. Häufigkeit einer Summe s: 6 − |s − 7| Möglichkeiten. */
+function g3Augen(l){
+  const f=s=>6-Math.abs(s-7);
+  if(l===1){const a=R(1,6),b=R(1,6);return {q:`Du würfelst mit zwei Spielwürfeln eine <b>${a}</b> und eine <b>${b}</b>. Wie groß ist die Augensumme?`,a:a+b,sol:`${a} + ${b} = ${a+b}.`};}
+  if(l===2){const imp=pick([1,13,14]),ch=shuffle([imp,...shuffle([2,3,4,5,6,7,8,9,10,11,12]).slice(0,3)]).map(String);
+    return {q:'Du würfelst mit zwei Spielwürfeln und addierst die Augen. Welche Augensumme ist <b>unmöglich</b>?',type:'choice',choices:ch,a:String(imp),
+      sol:`Die kleinste Summe ist 1 + 1 = 2, die größte 6 + 6 = 12. ${imp} geht deshalb nicht.`};}
+  let a,b;do{a=R(2,12);b=R(2,12);}while(f(a)===f(b));const w=f(a)>f(b)?a:b;
+  return {q:'Du würfelst mit zwei Spielwürfeln und addierst die Augen. Welche Augensumme kommt <b>öfter</b> vor?',type:'choice',choices:[a,b].sort((x,y)=>x-y).map(String),a:String(w),
+    sol:`Für ${a} gibt es ${f(a)} ${f(a)===1?'Möglichkeit':'Möglichkeiten'}, für ${b} gibt es ${f(b)}. Also kommt ${w} öfter vor. Am häufigsten ist die 7.`};
+}
+/* Busfahrplan lesen. */
+function g3Fahrplan(l){
+  const st=['Bahnhof','Marktplatz','Schule','Freibad','Zeltplatz'],t=[R(7*12,16*12)*5];
+  for(let i=1;i<st.length;i++)t.push(t[i-1]+R(3,12));
+  const tab=`<table class="fp"><tr><th>Haltestelle</th><th>Uhrzeit</th></tr>${st.map((s,i)=>`<tr><td>${s}</td><td>${timeStr(t[i])}</td></tr>`).join('')}</table>`;
+  if(l===1){const k=R(1,4);return {q:`Lies im Fahrplan ab: Wann ist der Bus an der Haltestelle <b>${st[k]}</b>? (Schreibweise 16:45)${tab}`,type:'time',ph:'hh:mm',a:timeStr(t[k]),
+    sol:`In der Zeile ${st[k]} steht ${timeStr(t[k])} Uhr.`};}
+  const i=R(0,3),j=R(i+1,4);
+  if(l===2)return {q:`Wie viele Minuten fährt der Bus von <b>${st[i]}</b> bis <b>${st[j]}</b>?${tab}`,a:t[j]-t[i],unit:'min',
+    sol:`Abfahrt ${timeStr(t[i])} Uhr, Ankunft ${timeStr(t[j])} Uhr: ${t[j]-t[i]} Minuten.`};
+  const v=R(2,9)*5;
+  return {q:`Der Bus hat <b>${v} Minuten Verspätung</b>. Wann kommt er an der Haltestelle <b>${st[j]}</b> an? (Schreibweise 16:45)${tab}`,type:'time',ph:'hh:mm',a:timeStr(t[j]+v),
+    sol:`Laut Fahrplan ${timeStr(t[j])} Uhr, dazu ${v} Minuten: ${timeStr(t[j]+v)} Uhr.`};
+}
+
+/* Alle Themen. Welche davon ein Kind sieht und in welcher Reihenfolge, legt das Lehrwerk fest (LEHRWERKE). */
 const TOPICS=[
   {id:'daten',name:'Daten & Diagramme',icon:'📊',gens:[gDiagramm,gStrich],tip:'Geh vom oberen Ende der Säule waagrecht zur Achse und lies dort ab. In einer Strichliste ist jedes Bündel 5.'},
   {id:'stell',name:'Zahlen & Stellenwert',icon:'🔢',gens:[gStellenwert,gFolge],tip:'Zähle die Stellen immer von rechts: Einer, Zehner, Hunderter, Tausender … Bei Zahlenfolgen: Was passiert von einer Zahl zur nächsten?'},
@@ -675,6 +1071,16 @@ const TOPICS=[
   {id:'teil',name:'Teilbarkeit',icon:'🧩',gens:[gTeil,gPrim,gGgtKgv],tip:'Teilbarkeitsregeln: 2 → Endziffer gerade, 5 → 0 oder 5, 10 → 0, 3 und 9 → Quersumme. Eine Primzahl hat genau zwei Teiler: 1 und sich selbst.'},
   {id:'winkel',name:'Winkel',icon:'🕒',gens:[gWinkel],tip:'Spitz unter 90°, recht genau 90°, stumpf bis 180°, gestreckt 180°, überstumpf bis 360°, voll 360°. Nebenwinkel ergeben zusammen 180°, Scheitelwinkel sind gleich groß.'},
   {id:'flaeche',name:'Umfang & Flächeninhalt',icon:'🟩',gens:[gFlaeche,gFlEinheit],tip:'Umfang = alle Seiten zusammen. Fläche Rechteck = Länge · Breite. Flächeneinheiten haben die Umrechnungszahl 100: mm², cm², dm², m², a, ha, km².'},
+  /* 3. Klasse Grundschule (Reihenfolge legt das Lehrwerk gs3by fest) */
+  {id:'g3mal',name:'Mal & Geteilt',icon:'➗',gens:[g3Mal],tip:'Kernaufgaben (mal 1, 2, 5, 10) helfen bei den schweren: 6 · 7 ist 5 · 7 und noch eine 7 dazu. Geteilt ist die Umkehrung von Mal. Beim Rest: Wie oft passt die Zahl ganz hinein?'},
+  {id:'g3kombi',name:'Kombinieren',icon:'🌳',gens:[g3Kombi],tip:'Zeichne ein Baumdiagramm: Für jede erste Wahl so viele Zweige, wie es zweite Möglichkeiten gibt. Dann malnehmen.'},
+  {id:'g3sach',name:'Sachaufgaben',icon:'📖',gens:[g3Sach],tip:'Lies genau: Was weißt du, und was ist gefragt? Welche Rechenart passt? Manchmal brauchst du zwei Rechenschritte.'},
+  {id:'g3geo',name:'Flächen, Körper, Symmetrie',icon:'🧊',gens:[g3Koerper,g3Sym,g3Flaeche],tip:'Ecken sind die Spitzen, Kanten die Linien zwischen zwei Flächen. Achsensymmetrisch heißt: Beide Hälften passen beim Spiegeln genau aufeinander. Flächen vergleichst du mit Kästchen.'},
+  {id:'g3zahl',name:'Zahlen bis 1000',icon:'🔢',gens:[g3Zahl,g3Strahl,g3Runden],tip:'H = Hunderter, Z = Zehner, E = Einer. Beim Vergleichen zuerst die Hunderter, dann die Zehner, dann die Einer. Beim Runden entscheidet die Ziffer rechts daneben.'},
+  {id:'g3plus',name:'Plus & Minus im Kopf',icon:'➕',gens:[g3Plus,l=>gZahlenmauer(l===1?1:2)],tip:'Zerlege die zweite Zahl: erst die Hunderter, dann die Zehner, dann die Einer. Mach eine Probe mit der Umkehraufgabe.'},
+  {id:'g3groessen',name:'Geld, Längen, Gewichte, Zeit',icon:'📏',gens:[g3Geld,g3Laenge,g3Gewicht,g3Zeit,g3Vorstellung],tip:'1 € = 100 ct, 1 m = 100 cm, 1 cm = 10 mm, 1 km = 1000 m, 1 kg = 1000 g, 1 h = 60 min, 1 min = 60 s. Bei 2,35 € stehen vor dem Komma die Euro, dahinter die Cent.'},
+  {id:'g3schrift',name:'Schriftlich rechnen',icon:'✍️',gens:[g3SchriftAdd,g3SchriftSub,g3Ueberschlag,g3Spiegel],tip:'Genau untereinander schreiben: Einer unter Einer, Zehner unter Zehner. Von rechts nach links rechnen, den Übertrag nicht vergessen. Vorher überschlagen.'},
+  {id:'g3daten',name:'Daten & Zufall',icon:'🎲',gens:[gDiagramm,gStrich,g3Zufall,g3Augen,g3Fahrplan],tip:'Lies die Säule an der Achse ab. In einer Strichliste ist jedes Bündel 5. Sicher: passiert immer. Unmöglich: passiert nie. Möglich: kann passieren.'},
   /* extra: eigener Bereich auf der Startseite, nicht im Themen-Raster, nicht in
      "Alles gemischt", nicht in der Buchzuordnung und nicht in "Alles drin". */
   {id:'kopf',name:'Kopfrechnen Grundschule',icon:'🧠',gens:[gKopf],extra:true,tip:'Zerlege schwierige Zahlen: Erst die Zehner, dann die Einer. Bei glatten Zahlen rechnest du ohne die Nullen und hängst sie am Ende wieder an.'},
@@ -740,23 +1146,141 @@ const BOOK=[
   [198,10,'Flächeninhalt von Rechteck und Quadrat',['flaeche']],
   [200,10,'Vermischte Übungen',['flaeche']]
 ];
-const BOOK_FIRST=6,BOOK_LAST=207;
-const secEnd=i=>i+1<BOOK.length?BOOK[i+1][0]-1:BOOK_LAST;
-function bookSection(p){if(p<BOOK_FIRST||p>BOOK_LAST)return -1;let s=-1;BOOK.forEach((b,i)=>{if(b[0]<=p)s=i;});return s;}
+/* Inhaltsverzeichnis „Welt der Zahl 3“, Bayern (Westermann), nach Fotos des Nutzers, 2026-10-13.
+   Aufbau wie BOOK, dazu optional ein 5. Feld mit Einstellungen für den Abschnitt (siehe genQ):
+   reihen = 1×1-Reihen, kopf/ops = Kopfrechnen-Klasse und Rechenarten, lv = feste Stufe
+   (Zahl oder Liste), nur = {Thema: [Generatoren]} für passgenaue Aufgaben.
+   Kapitelnummern sind eigene Zählung, das Buch nummeriert nicht. Ab Seite 134 Wortspeicher. */
+const KAP3=['','Wiederholung und Vertiefung','Multiplizieren und Dividieren','Sachsituationen und Lösungswege','Achsensymmetrie',
+  'Zahlenraum bis 1000','Flexibles Addieren und Subtrahieren','Längen','Schriftliches Addieren','Gewichte','Knobeln und Erklären',
+  'Schriftliches Subtrahieren','Flächen und Körper','Daten und Wahrscheinlichkeit','Zeit','Daten und Informationen'];
+const BOOK3=[
+  [4,1,'Wiederholung aus Klasse 2',['kopf','g3sach'],{kopf:2}],
+  [6,1,'Zahlenraum bis 100, schrittweise rechnen',['kopf'],{kopf:2}],
+  [8,1,'Zweistellig plus und minus',['kopf'],{kopf:2,ops:['+','-']}],
+  [10,1,'Minusaufgaben',['kopf'],{kopf:2,ops:['-']}],
+  [11,1,'Sachaufgaben: Frage, Rechnung, Antwort',['g3sach']],
+  [14,1,'Orientierung, Flächeninhalt',['g3geo'],{nur:{g3geo:[g3Flaeche]}}],
+  [16,2,'Kernaufgaben',['einmaleins','g3mal'],{reihen:[1,2,5],lv:1}],
+  [18,2,'Verwandte Aufgaben, Rechenstrategien',['g3mal'],{lv:2}],
+  [20,2,'Einmaleins mit 4 und 8',['einmaleins'],{reihen:[4,8]}],
+  [23,2,'Einmaleins mit 3, 6 und 9',['einmaleins'],{reihen:[3,6,9]}],
+  [26,2,'Zusammenhänge, Einmaleins mit 7',['einmaleins'],{reihen:[7]}],
+  [28,2,'Vielfache, Teilen mit Rest',['g3mal'],{lv:3}],
+  [31,2,'Einmaleins üben',['einmaleins','g3mal']],
+  [33,2,'Kombinieren mit dem Baumdiagramm',['g3kombi']],
+  [34,3,'Lösungswege: Streifen, Tabelle, Skizze',['g3sach']],
+  [38,4,'Achsensymmetrische Figuren',['g3geo'],{nur:{g3geo:[g3Sym]}}],
+  [42,4,'Wiederholung gemischt',['einmaleins','g3mal','g3sach','g3geo']],
+  [44,5,'Tausender, Hunderter, Zehner, Einer',['g3zahl'],{nur:{g3zahl:[g3Zahl]}}],
+  [46,5,'Zerlegen und Bündeln',['g3zahl'],{nur:{g3zahl:[g3Zahl]}}],
+  [48,5,'Stellenwerttafel',['g3zahl'],{nur:{g3zahl:[g3Zahl]}}],
+  [50,5,'Erstes Rechnen bis 1000, im Kopf',['g3plus','kopf'],{kopf:3,ops:['+','-'],lv:1}],
+  [52,5,'Zahlenstrahl, rund um den Hunderter',['g3zahl','g3plus'],{nur:{g3zahl:[g3Strahl]}}],
+  [55,5,'Geld mit Komma',['g3groessen'],{nur:{g3groessen:[g3Geld]},lv:2}],
+  [56,5,'Runden',['g3zahl'],{nur:{g3zahl:[g3Runden]}}],
+  [58,6,'Rechnen in einem Hunderter',['g3plus'],{lv:1}],
+  [60,6,'Plus und minus über den Hunderter',['g3plus'],{lv:[2,3]}],
+  [64,6,'Zahlenblick, Zahlenrätsel',['g3plus','g3zahl']],
+  [67,6,'Rechnen mit Geldbeträgen',['g3groessen'],{nur:{g3groessen:[g3Geld]}}],
+  [68,6,'Wiederholung gemischt',['g3zahl','g3plus','g3groessen']],
+  [70,7,'Meter und Zentimeter, Kommaschreibweise',['g3groessen'],{nur:{g3groessen:[g3Laenge]}}],
+  [72,7,'Zentimeter, Millimeter, Kilometer',['g3groessen'],{nur:{g3groessen:[g3Laenge]}}],
+  [74,7,'Größenvorstellungen',['g3groessen'],{nur:{g3groessen:[g3Vorstellung,g3Laenge]}}],
+  [76,7,'Verschiedene Lösungswege',['g3sach','g3groessen'],{nur:{g3groessen:[g3Laenge]}}],
+  [78,8,'Ohne und mit einem Übertrag',['g3schrift'],{nur:{g3schrift:[g3SchriftAdd]},lv:[1,2]}],
+  [80,8,'Mit zwei Überträgen',['g3schrift'],{nur:{g3schrift:[g3SchriftAdd]},lv:3}],
+  [81,8,'Übungen zum schriftlichen Addieren',['g3schrift'],{nur:{g3schrift:[g3SchriftAdd]}}],
+  [82,8,'Im Kopf oder schriftlich, überschlagen',['g3schrift','g3plus'],{nur:{g3schrift:[g3Ueberschlag,g3SchriftAdd]}}],
+  [84,8,'Geldbeträge addieren',['g3groessen'],{nur:{g3groessen:[g3Geld]},lv:3}],
+  [85,8,'Addieren mit Ziffernkarten',['g3schrift'],{nur:{g3schrift:[g3SchriftAdd]}}],
+  [86,9,'Gramm und Kilogramm',['g3groessen'],{nur:{g3groessen:[g3Gewicht]}}],
+  [88,9,'Rechnen mit Gewichten',['g3groessen'],{nur:{g3groessen:[g3Gewicht]},lv:[2,3]}],
+  [90,9,'Sachaufgaben mit Gewichten',['g3sach','g3groessen'],{nur:{g3groessen:[g3Gewicht]}}],
+  [94,10,'Knobeln und erklären',['g3sach','g3kombi']],
+  [96,11,'Ohne und mit einem Übertrag',['g3schrift'],{nur:{g3schrift:[g3SchriftSub]},lv:[1,2]}],
+  [99,11,'Mit zwei Überträgen, mit der Null',['g3schrift'],{nur:{g3schrift:[g3SchriftSub]},lv:3}],
+  [101,11,'Übungen zum schriftlichen Subtrahieren',['g3schrift'],{nur:{g3schrift:[g3SchriftSub]}}],
+  [103,11,'Im Kopf oder schriftlich',['g3schrift','g3plus'],{nur:{g3schrift:[g3SchriftSub]}}],
+  [105,11,'Erst überschlagen, dann rechnen',['g3schrift'],{nur:{g3schrift:[g3Ueberschlag]}}],
+  [106,11,'Geldbeträge subtrahieren',['g3groessen'],{nur:{g3groessen:[g3Geld]},lv:3}],
+  [107,11,'Spiegelzahlen',['g3schrift'],{nur:{g3schrift:[g3Spiegel]}}],
+  [108,11,'Wiederholung gemischt',['g3schrift','g3groessen','g3plus']],
+  [110,12,'Rechter Winkel',['g3geo'],{nur:{g3geo:[g3Flaeche]}}],
+  [112,12,'Geometrische Körper, Kantenmodell',['g3geo'],{nur:{g3geo:[g3Koerper]}}],
+  [114,12,'Würfelnetze, Kippen, Kopfgeometrie',['g3geo'],{nur:{g3geo:[g3Koerper]},lv:[2,3]}],
+  [118,13,'Augensummen im Säulendiagramm',['g3daten'],{nur:{g3daten:[gDiagramm,g3Augen]}}],
+  [120,13,'Häufigkeiten und Gewinnchancen',['g3daten'],{nur:{g3daten:[g3Augen,g3Zufall]}}],
+  [122,14,'Uhrzeit, Minuten und Sekunden',['g3groessen'],{nur:{g3groessen:[g3Zeit]}}],
+  [124,14,'Zeitspannen und Zeitpunkte',['g3groessen'],{nur:{g3groessen:[g3Zeit]},lv:[2,3]}],
+  [125,14,'Schätzaufgabe zur Zeit',['g3groessen'],{nur:{g3groessen:[g3Vorstellung,g3Zeit]}}],
+  [126,15,'Fahrplan lesen',['g3daten'],{nur:{g3daten:[g3Fahrplan]}}],
+  [128,15,'Informationen nutzen, kombinieren',['g3sach','g3kombi']],
+  [130,15,'Tabellen und Diagramme',['g3daten'],{nur:{g3daten:[gDiagramm,gStrich,g3Fahrplan]}}],
+  [131,15,'Kann das sein?',['g3groessen'],{nur:{g3groessen:[g3Vorstellung]}}],
+  [132,15,'Wiederholung gemischt',['g3schrift','g3mal','g3groessen','g3daten']]
+];
+
+/* ---------- Lehrwerke ----------
+   Ein Lehrwerk = ein Schulbuch bzw. eine Jahrgangsstufe: welche Themen in welcher Reihenfolge,
+   dazu optional Kapitel und Seitenzuordnung (buch wie BOOK, ab/bis = erste/letzte Übungsseite,
+   anhang = letzte Seite von Lösungen und Anhang). Jedes Kind wählt im Profil sein Lehrwerk.
+   Neues Schuljahr: neues Lehrwerk mit eigener ID ergänzen, alte stehen lassen
+   (sonst passen gespeicherte Profile nicht mehr). Ohne buch zeigt die App die Themenliste. */
+const LEHRWERKE={
+  w5rs:{name:'Westermann Mathematik 5',schule:'Realschule Bayern',klasse:5,
+    themen:['daten','stell','system','runden','addsub','muldiv','reihe','text','groessen','dreisatz','geo','ganz','teil','winkel','flaeche'],
+    kapitel:CHAPTERS,buch:BOOK,ab:6,bis:207,anhang:230,anhangName:'Lösungen und Anhang'},
+  gs3by:{name:'Welt der Zahl 3',schule:'Grundschule Bayern',klasse:3,
+    themen:['g3mal','g3kombi','g3sach','g3geo','g3zahl','g3plus','g3groessen','g3schrift','g3daten'],
+    kapitel:KAP3,buch:BOOK3,ab:4,bis:133,anhang:136,anhangName:'der Wortspeicher zum Nachschlagen'}
+};
+const LW_DEFAULT='w5rs';
+const LW=()=>LEHRWERKE[profil().lw]||LEHRWERKE[LW_DEFAULT];
+const buchTopics=()=>LW().themen.map(id=>TOPIC_BY_ID[id]).filter(Boolean);
+const secEnd=i=>{const w=LW();return i+1<w.buch.length?w.buch[i+1][0]-1:w.bis;};
+function bookSection(p){const w=LW();if(!w.buch||p<w.ab||p>w.bis)return -1;let s=-1;w.buch.forEach((b,i)=>{if(b[0]<=p)s=i;});return s;}
+
+/* ---------- Profile (ein Profil pro Kind) ----------
+   matheTrainer.profile = {aktiv, gewaehlt, liste:[{id, name, icon, lw}]}.
+   Profil p1 speichert unter dem alten Schlüssel matheTrainer.v1, so blieb der Stand vor
+   den Profilen erhalten. Weitere Profile speichern unter matheTrainer.v1.<id>.
+   gewaehlt=false: neues Gerät ohne alte Daten, die App fragt zuerst, wer übt. */
+const PKEY='matheTrainer.profile',ICONS=['🦊','🐼','🐯','🐨','🦄','🐸','🐙','🦁'];
+let P={aktiv:'p1',gewaehlt:true,liste:[]};
+const keyOf=id=>id==='p1'?'matheTrainer.v1':'matheTrainer.v1.'+id;
+const profil=()=>P.liste.find(p=>p.id===P.aktiv)||P.liste[0];
+function saveProfiles(){try{localStorage.setItem(PKEY,JSON.stringify(P));}catch(e){}}
+function loadProfiles(){
+  let p=null;try{p=JSON.parse(localStorage.getItem(PKEY));}catch(e){}
+  if(p&&Array.isArray(p.liste)&&p.liste.length)P=p;
+  else{let alt=false;try{alt=localStorage.getItem(keyOf('p1'))!==null;}catch(e){}
+    P={aktiv:'p1',gewaehlt:alt,liste:[{id:'p1',name:'Kind 1',icon:'🦊',lw:'w5rs'},{id:'p2',name:'Kind 2',icon:'🐼',lw:'gs3by'}]};}
+  P.liste.forEach(x=>{if(!LEHRWERKE[x.lw])x.lw=LW_DEFAULT;x.name=String(x.name||'Kind').slice(0,20);if(!x.icon)x.icon=ICONS[0];});
+  if(!P.liste.some(x=>x.id===P.aktiv))P.aktiv=P.liste[0].id;
+  saveProfiles();
+}
+/* Gespeicherter Stand eines anderen Profils, nur zum Anzeigen. */
+function peek(id){if(id===P.aktiv)return S;try{return JSON.parse(localStorage.getItem(keyOf(id)))||{};}catch(e){return {};}}
 
 /* ---------- Speicher ---------- */
-const KEY='matheTrainer.v1';
+let KEY='matheTrainer.v1';
 let S={};
 const freshStats=()=>({streak:0,best:0,lastDay:null,today:0,goalDays:0,frz:null,frozen:[],days:[],medals:{},
-  answered:0,right:0,perfect:0,hardRight:0,combo:0,bestCombo:0,mastered:{}});
-function load(){try{S=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){S={};}
+  answered:0,right:0,perfect:0,hardRight:0,combo:0,bestCombo:0,mastered:{},tests:0,note1:0,testBest:{}});
+/* Lädt den Stand des aktiven Profils. Auch beim Profilwechsel, deshalb werden
+   1×1- und Kopfrechnen-Einstellungen immer neu gesetzt. */
+function load(){KEY=keyOf(P.aktiv);
+  try{S=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){S={};}
   S.stars=S.stars||0;S.hist=S.hist||{};S.pages=S.pages||{};S.lvl=S.lvl||2;
   S.mal=S.mal||{};   // 1×1: je Reihe die letzten 20 Antworten (1 = richtig)
+  S.tests=Array.isArray(S.tests)?S.tests:[];   // Testverlauf: {id, d, r, n, note, s}
   const mr=(Array.isArray(S.malReihen)?S.malReihen:[]).filter(r=>Number.isInteger(r)&&r>=1&&r<=9);
   MAL.reihen=mr.length?mr:[1,2,3,4,5,6,7,8,9];
-  if([1,2,3,4].includes(S.kopfKlasse))KOPF.klasse=S.kopfKlasse;
+  // Kopfrechnen: ohne eigene Wahl die Klasse des Lehrwerks (höchstens 4)
+  KOPF.klasse=[1,2,3,4].includes(S.kopfKlasse)?S.kopfKlasse:Math.min(4,Math.max(1,LW().klasse));
   const ko=(Array.isArray(S.kopfOps)?S.kopfOps:[]).filter(o=>['+','-','*',':'].includes(o));
-  if(ko.length)KOPF.ops=ko;
+  KOPF.ops=ko.length?ko:['+','-','*',':'];
   S.st=Object.assign(freshStats(),S.st||{});delete S.days;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
@@ -793,9 +1317,10 @@ function activity(n){
 
 const TIERS=['bronze','silver','gold','diamond'];
 const MCATS=[['serie','Serie'],['ziel','Tagesziel'],['aufgaben','Richtige Aufgaben'],['treffer','Richtige in Folge'],
-  ['runden','Perfekte Runden'],['themen','Themen gemeistert'],['profi','Stufe „Schwer“']];
-const BUCH_TOPICS=TOPICS.filter(t=>!t.extra);
-const masteredCnt=()=>Object.keys(S.st.mastered).filter(id=>TOPIC_BY_ID[id]&&!TOPIC_BY_ID[id].extra).length;
+  ['runden','Perfekte Runden'],['themen','Themen gemeistert'],['tests','Tests'],['profi','Stufe „Schwer“']];
+/* Themen-Medaillen zählen die Themen des aktuellen Lehrwerks. Eine verdiente Medaille bleibt. */
+const masteredCnt=()=>buchTopics().filter(t=>S.st.mastered[t.id]).length;
+const testGut=()=>buchTopics().filter(t=>(S.st.testBest||{})[t.id]<=2).length;
 const M=(cat,id,icon,name,tier,need,one,many,val,desc)=>({cat,id,icon,name,tier,need,one,many,val,desc});
 const MEDALS=[
   M('serie','s3','🔥','Funke','bronze',3,'Tag','Tage',()=>S.st.best,'3 Tage in Folge'),
@@ -820,11 +1345,22 @@ const MEDALS=[
   M('runden','p50','🌟','Perfektionist','gold',50,'Runde','Runden',()=>S.st.perfect,'50 Runden 10 von 10'),
   M('themen','t1','📘','Erstes Thema','bronze',1,'Thema','Themen',masteredCnt,'1 Thema gemeistert'),
   M('themen','t5','📚','Fünf Themen','silver',5,'Thema','Themen',masteredCnt,'5 Themen gemeistert'),
-  M('themen','tA','🎓','Alles drin','gold',BUCH_TOPICS.length,'Thema','Themen',masteredCnt,'Alle '+BUCH_TOPICS.length+' Themen gemeistert'),
+  M('themen','tA','🎓','Alles drin','gold',0,'Thema','Themen',masteredCnt,''),
+  M('tests','te1','📝','Erster Test','bronze',1,'Test','Tests',()=>S.st.tests,'Einen Test geschrieben'),
+  M('tests','te10','🗂️','Zehn Tests','silver',10,'Test','Tests',()=>S.st.tests,'10 Tests geschrieben'),
+  M('tests','te30','🏛️','Testprofi','gold',30,'Test','Tests',()=>S.st.tests,'30 Tests geschrieben'),
+  M('tests','n1','🥇','Glatte Eins','silver',1,'Einser','Einser',()=>S.st.note1,'Ein Test mit Note 1'),
+  M('tests','n5','🌟','Einser-Serie','gold',5,'Einser','Einser',()=>S.st.note1,'5 Tests mit Note 1'),
+  M('tests','tall','📜','Zeugnisreif','diamond',0,'Thema','Themen',testGut,''),
   M('profi','h25','💪','Mutig','bronze',25,'Aufgabe','Aufgaben',()=>S.st.hardRight,'25 schwere Aufgaben richtig'),
   M('profi','h100','🧩','Knobler','silver',100,'Aufgabe','Aufgaben',()=>S.st.hardRight,'100 schwere Aufgaben richtig'),
   M('profi','h500','🚀','Mathe-Genie','diamond',500,'Aufgabe','Aufgaben',()=>S.st.hardRight,'500 schwere Aufgaben richtig')
 ];
+/* Ziel hängt vom Lehrwerk ab (Anzahl seiner Themen), deshalb als Getter. */
+[['tA',n=>'Alle '+n+' Themen gemeistert'],['tall',n=>'Alle '+n+' Themen im Test mit Note 2 oder besser']].forEach(([id,desc])=>{
+  const m=MEDALS.find(x=>x.id===id),need=()=>buchTopics().length;
+  Object.defineProperty(m,'need',{get:need});Object.defineProperty(m,'desc',{get:()=>desc(need())});
+});
 function checkMedals(){
   const got=S.st.medals,fresh=[];
   MEDALS.forEach(m=>{if(!got[m.id]&&m.val()>=m.need){got[m.id]=dayIdx();fresh.push(m);}});
@@ -850,10 +1386,13 @@ function toast(t){const el=document.getElementById('toast');el.textContent=t;el.
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2600);}
 /* Themen zu einer Buchseite: aus dem Inhaltsverzeichnis (BOOK) plus eigene Zuordnungen (S.pages). */
 function topicsForPage(p){
-  const si=bookSection(p),ids=new Set(si>=0?BOOK[si][3]:[]);
-  TOPICS.forEach(t=>{const r=S.pages[t.id];if(r&&r[0]!=null&&r[1]!=null&&p>=r[0]&&p<=r[1])ids.add(t.id);});
-  return {si,topics:TOPICS.filter(t=>ids.has(t.id))};
+  /* Abschnittsthemen zuerst (auch 1×1 und Kopfrechnen), dann eigene Zuordnungen. */
+  const si=bookSection(p),ids=new Set(si>=0?LW().buch[si][3]:[]);
+  buchTopics().forEach(t=>{const r=S.pages[t.id];if(r&&r[0]!=null&&r[1]!=null&&p>=r[0]&&p<=r[1])ids.add(t.id);});
+  return {si,topics:[...ids].map(id=>TOPIC_BY_ID[id]).filter(Boolean)};
 }
+/* Seitensuche nur, wenn das Lehrwerk Seiten hat oder eigene Seiten eingetragen sind. */
+const hatSeiten=()=>!!LW().buch||buchTopics().some(t=>{const r=S.pages[t.id];return r&&r[0]!=null&&r[1]!=null;});
 
 /* ---------- Antwort prüfen ---------- */
 function parseNum(s){
@@ -865,11 +1404,14 @@ function check(q,v){
   if(q.type==='choice')return v===q.a;
   if(q.type==='pair'){const m=(v.match(/\d+/g)||[]).map(Number);return m.length===2&&m[0]===q.a[0]&&m[1]===q.a[1];}
   if(q.type==='time')return normTime(v)===q.a;
+  /* geld: Betrag in Euro mit Komma (2,35 oder 2,3), q.a in Cent. */
+  if(q.type==='geld'){const s=v.replace(/[\s€a-zA-Z]/g,'').replace(',','.');return /^\d+(\.\d{1,2})?$/.test(s)&&Math.round(parseFloat(s)*100)===q.a;}
   /* word: römische Zahlen (Groß/klein egal) und Dualzahlen (führende Nullen egal). */
   if(q.type==='word'){let s=v.toUpperCase().replace(/\s/g,'');if(q.bin)s=s.replace(/^0+(?=.)/,'');return s===q.a;}
   const n=parseNum(v);return n!==null&&Math.abs(n-q.a)<1e-9;
 }
 function showAns(q){
+  if(q.type==='geld')return komma(q.a)+' '+(q.unit||'€');
   if(q.type==='choice'||q.type==='time'||q.type==='word')return q.a;
   if(q.type==='pair')return q.fa||q.a.join(' | ');
   return fmt(q.a)+(q.unit?' '+q.unit:'');
@@ -880,14 +1422,21 @@ const app=document.getElementById('app');
 let tab='ueben',cur=null;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{cur=null;tab=b.dataset.tab;render();});
+/* Ein laufender Test wird nur nach Rückfrage verlassen. */
+const testVerlassen=()=>!(cur&&cur.test&&!cur.done)||confirm('Test abbrechen? Er wird nicht gewertet.');
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{if(!testVerlassen())return;cur=null;tab=b.dataset.tab;render();});
+document.getElementById('who').onclick=()=>{if(!testVerlassen())return;cur=null;tab='profil';render();};
 function setNav(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab&&!cur));}
+function renderHeader(){const p=profil(),w=LW();
+  document.getElementById('who').textContent=p.icon+' '+p.name;
+  document.getElementById('hSub').textContent=`${w.klasse}. Klasse · ${w.name} · ${w.schule}`;}
 
 document.getElementById('celeOk').onclick=closeCele;
 document.getElementById('celeAll').onclick=()=>{closeCele();cur=null;tab='erfolge';render();};
 document.getElementById('cele').onclick=e=>{if(e.target.id==='cele')closeCele();};
 
-function render(){setNav();if(cur){return cur.done?renderResult():renderQuestion();}
+function render(){renderHeader();setNav();if(cur){return cur.done?(cur.test?renderTestResult():renderResult()):renderQuestion();}
+  if(tab==='tests')return renderTests();if(tab==='profil')return renderProfil();
   if(tab==='erfolge')return renderErfolge();
   if(tab==='fortschritt')return renderProgress();if(tab==='seiten')return renderPages();return renderHome();}
 
@@ -929,71 +1478,92 @@ function kopfCard(){
   </div>`;
 }
 
+const pgMsg=()=>{const o=document.getElementById('pgOut');return o?o.innerHTML:'';};
 function renderHome(msg=''){
   app.innerHTML=`${goalStrip()}
   ${malCard()}
   ${kopfCard()}
-  <div class="card"><h2>📖 Aufgaben zur Buchseite</h2>
+  ${hatSeiten()?`<div class="card"><h2>📖 Aufgaben zur Buchseite</h2>
     <div class="row"><input id="pg" type="number" inputmode="numeric" min="1" max="400" placeholder="Seitenzahl im Buch" style="flex:1;min-width:150px"><button class="primary" id="pgGo">Suchen</button></div>
-    <div id="pgOut" class="mute" style="margin-top:10px">${msg}</div></div>
+    <div id="pgOut" class="mute" style="margin-top:10px">${msg}</div></div>`:''}
   <div class="card"><h2>Schwierigkeit</h2><div class="row">
     ${[['1','Leicht'],['2','Mittel'],['3','Schwer']].map(([v,t])=>`<button class="seg ${S.lvl==v?'on':''}" data-lvl="${v}">${t}</button>`).join('')}</div></div>
-  <div class="card"><h2>Thema wählen</h2><div class="grid">
-    ${BUCH_TOPICS.map(t=>{const m=mastery(t.id);return `<button class="topic" data-t="${t.id}"><span class="ic">${t.icon}</span><span class="nm">${t.name}</span><span class="sm">${m===null?'noch nicht geübt':m+' % richtig'}</span></button>`;}).join('')}
+  <div class="card"><h2>Thema wählen · ${LW().klasse}. Klasse</h2><div class="grid">
+    ${buchTopics().map(t=>{const m=mastery(t.id);return `<button class="topic" data-t="${t.id}"><span class="ic">${t.icon}</span><span class="nm">${t.name}</span><span class="sm">${m===null?'noch nicht geübt':m+' % richtig'}</span></button>`;}).join('')}
   </div><div class="row" style="margin-top:12px"><button class="primary" id="mix">🎲 Alles gemischt</button></div></div>`;
   document.getElementById('goalStrip').onclick=()=>{tab='erfolge';render();};
-  app.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>{S.lvl=+b.dataset.lvl;save();renderHome(document.getElementById('pgOut').innerHTML);});
+  app.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>{S.lvl=+b.dataset.lvl;save();renderHome(pgMsg());});
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>start([b.dataset.t]));
-  document.getElementById('mix').onclick=()=>start(BUCH_TOPICS.map(t=>t.id));
+  document.getElementById('mix').onclick=()=>start(buchTopics().map(t=>t.id));
   // 1×1: Reihen wählen und Stufe starten
   app.querySelectorAll('[data-reihe]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.reihe,alle=MAL.reihen.length===9;
     if(v==='alle')MAL.reihen=[1,2,3,4,5,6,7,8,9];
     else{const r=+v;MAL.reihen=alle?[r]:MAL.reihen.includes(r)?MAL.reihen.filter(x=>x!==r):[...MAL.reihen,r].sort((x,y)=>x-y);
       if(!MAL.reihen.length)MAL.reihen=[1,2,3,4,5,6,7,8,9];}
-    S.malReihen=MAL.reihen;save();renderHome(document.getElementById('pgOut').innerHTML);
+    S.malReihen=MAL.reihen;save();renderHome(pgMsg());
   });
   // Kopfrechnen: Klasse wählen, Rechenarten an- und abwählen (mindestens eine bleibt)
   app.querySelectorAll('[data-kl]').forEach(b=>b.onclick=()=>{
-    KOPF.klasse=+b.dataset.kl;S.kopfKlasse=KOPF.klasse;save();renderHome(document.getElementById('pgOut').innerHTML);});
+    KOPF.klasse=+b.dataset.kl;S.kopfKlasse=KOPF.klasse;save();renderHome(pgMsg());});
   app.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{
     const o=b.dataset.op,neu=KOPF.ops.includes(o)?KOPF.ops.filter(x=>x!==o):[...KOPF.ops,o];
     if(neu.length)KOPF.ops=['+','-','*',':'].filter(x=>neu.includes(x));
-    S.kopfOps=KOPF.ops;save();renderHome(document.getElementById('pgOut').innerHTML);});
+    S.kopfOps=KOPF.ops;save();renderHome(pgMsg());});
   document.getElementById('kopfGo').onclick=()=>start(['kopf']);
   document.getElementById('mal1').onclick=()=>{MAL.stufe=1;start(['einmaleins']);};
   document.getElementById('mal2').onclick=()=>{MAL.stufe=2;start(['einmaleins']);};
+  if(!document.getElementById('pg'))return;
   const go=()=>{
-    const p=parseInt(document.getElementById('pg').value,10),out=document.getElementById('pgOut');
+    const w=LW(),p=parseInt(document.getElementById('pg').value,10),out=document.getElementById('pgOut');
     if(!p){out.textContent='Bitte eine Seitenzahl eingeben.';return;}
-    if(p>BOOK_LAST&&p<=230){out.textContent=`Ab Seite 208 stehen im Buch die Lösungen und der Anhang. Wähle unten ein Thema.`;return;}
+    if(w.buch&&p>w.bis&&p<=w.anhang){out.textContent=`Die Seiten ${w.bis+1} bis ${w.anhang} sind ${w.anhangName||'der Anhang'}. Wähle unten ein Thema.`;return;}
     const {si,topics:ts}=topicsForPage(p);
-    if(!ts.length){out.innerHTML=`Für Seite ${p} gibt es kein passendes Thema. Das Buch beginnt auf Seite ${BOOK_FIRST}. Unter „Buchseiten“ kannst du eigene Seiten ergänzen.`;return;}
-    const where=si>=0?`Seite ${p} · Kapitel ${BOOK[si][1]} ${esc(CHAPTERS[BOOK[si][1]])} · <b>${esc(BOOK[si][2])}</b>`:`Seite ${p} (eigene Zuordnung)`;
+    if(!ts.length){out.innerHTML=`Für Seite ${p} gibt es kein passendes Thema.${w.buch?` Das Buch beginnt auf Seite ${w.ab}.`:''} Unter Buch kannst du eigene Seiten ergänzen.`;return;}
+    const where=si>=0?`Seite ${p} · Kapitel ${w.buch[si][1]} ${esc(w.kapitel[w.buch[si][1]])} · <b>${esc(w.buch[si][2])}</b>`:`Seite ${p} (eigene Zuordnung)`;
     out.innerHTML=`<div style="margin-bottom:8px">${where}</div><div class="row">${ts.map(t=>`<button class="primary" data-pt="${t.id}">${t.icon} ${t.name}</button>`).join('')}${ts.length>1?'<button id="pgAll">🎲 Alles davon gemischt</button>':''}</div>`;
-    out.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>start([b.dataset.pt]));
-    const all=document.getElementById('pgAll');if(all)all.onclick=()=>start(ts.map(t=>t.id));
+    const opt=si>=0?w.buch[si][4]:null;   // Abschnitts-Einstellungen, z. B. passende 1×1-Reihen
+    out.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>start([b.dataset.pt],null,opt));
+    const all=document.getElementById('pgAll');if(all)all.onclick=()=>start(ts.map(t=>t.id),null,opt);
   };
   document.getElementById('pgGo').onclick=go;
   document.getElementById('pg').onkeydown=e=>{if(e.key==='Enter')go();};
 }
 
+/* Im Test bestimmt TEST_STUFEN die Stufe jeder Aufgabe (erst leicht, am Ende schwer),
+   sonst gilt die gewählte Schwierigkeit. Der 1×1-Test nimmt immer alle Reihen. */
+const TEST_STUFEN=[1,1,1,2,2,2,2,3,3,3];
+/* cur.opt: Einstellungen eines Buchabschnitts (siehe BOOK3). Sie gelten nur für diese Runde,
+   die gespeicherten 1×1- und Kopfrechnen-Einstellungen bleiben unverändert. */
+function genQ(t,lv){
+  const o=cur.opt||{};
+  if(o.lv)lv=Array.isArray(o.lv)?pick(o.lv):o.lv;
+  const gens=(o.nur&&o.nur[t.id])||t.gens;
+  if(t.id==='einmaleins'&&(cur.test||o.reihen)){const keep=[MAL.reihen,MAL.stufe];
+    MAL.reihen=o.reihen||[1,2,3,4,5,6,7,8,9];MAL.stufe=cur.test?(lv===1?1:2):2;
+    try{return pick(gens)(lv);}finally{[MAL.reihen,MAL.stufe]=keep;}}
+  if(t.id==='kopf'&&o.kopf){const keep=[KOPF.klasse,KOPF.ops];KOPF.klasse=o.kopf;KOPF.ops=o.ops||['+','-','*',':'];
+    try{return pick(gens)(lv);}finally{[KOPF.klasse,KOPF.ops]=keep;}}
+  return pick(gens)(lv);
+}
 function makeQ(){
-  let q;
+  const lv=cur.test?cur.lv[cur.i]:S.lvl;let q;
   for(let i=0;i<20;i++){
     const t=TOPIC_BY_ID[pick(cur.ids)];
-    q=pick(t.gens)(S.lvl);q.topic=t.id;
+    q=genQ(t,lv);q.topic=t.id;
     if(!cur.seen.has(q.q)){break;}
   }
   cur.seen.add(q.q);return q;
 }
-function start(ids){
-  cur={ids,i:0,n:10,right:0,stars:0,wrong:[],seen:new Set(),q:null,answered:false,hinted:false,done:false};
+/* testId gesetzt = Test (Themen-ID, 'mix' für alle Themen), sonst normale Übungsrunde. */
+function start(ids,testId,opt){
+  cur={ids,i:0,n:10,right:0,stars:0,wrong:[],seen:new Set(),q:null,answered:false,hinted:false,done:false,
+    test:!!testId,testId:testId||null,lv:TEST_STUFEN,log:[],t0:Date.now(),opt:opt||null};
   cur.q=makeQ();render();
 }
 
 function renderQuestion(){
-  const q=cur.q,t=TOPIC_BY_ID[q.topic];
+  const q=cur.q,t=TOPIC_BY_ID[q.topic],T=cur.test;
   let input='';
   if(q.type==='choice'){
     input=`<div class="choices">${q.choices.map(c=>`<button class="ch" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
@@ -1003,17 +1573,19 @@ function renderQuestion(){
     const im=q.type==='word'?(q.bin?'numeric':'text'):(q.type==='pair'||q.type==='time')?'text':'decimal';
     input=`<div class="row">${q.neg?'<button type="button" id="pm" aria-label="Vorzeichen wechseln" style="min-width:52px;font-weight:700">±</button>':''}<input id="ans" type="text" inputmode="${im}" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="${q.type==='word'&&!q.bin?'characters':'off'}" placeholder="${esc(q.ph||'Deine Antwort')}" style="flex:1;min-width:140px">${q.unit?`<span class="suffix">${esc(q.unit)}</span>`:''}</div>
     ${q.type==='pair'?'<div class="mute" style="margin-top:6px">Zwei Zahlen, getrennt durch Leerzeichen oder |</div>':''}
-    <div class="row" style="margin-top:12px"><button class="primary" id="ok">Prüfen</button></div>`;
+    ${q.type==='geld'?'<div class="mute" style="margin-top:6px">Mit Komma schreiben, z. B. 2,35</div>':''}
+    <div class="row" style="margin-top:12px"><button class="primary" id="ok">${T?'Weiter':'Prüfen'}</button></div>`;
   }
+  /* Im Test: kein Tipp, keine Rückmeldung, keine Sterne-Anzeige. */
   app.innerHTML=`<div class="card">
-    <div class="row" style="justify-content:space-between"><span class="mute">${t.icon} ${t.name} · Frage ${cur.i+1} von ${cur.n}</span><span class="mute">⭐ ${cur.stars}</span></div>
+    <div class="row" style="justify-content:space-between"><span class="mute">${T?'📝 Test · ':''}${t.icon} ${t.name} · ${T?'Aufgabe':'Frage'} ${cur.i+1} von ${cur.n}</span>${T?'':`<span class="mute">⭐ ${cur.stars}</span>`}</div>
     <div class="prog"><i style="width:${cur.i/cur.n*100}%"></i></div>
     <div class="q">${q.q}</div>${q.svg||''}
     <div id="inp">${input}</div>
-    <div class="row" style="margin-top:12px"><button id="hint">💡 Tipp</button><button id="quit">Beenden</button></div>
+    <div class="row" style="margin-top:12px">${T?'':'<button id="hint">💡 Tipp</button>'}<button id="quit">${T?'Test abbrechen':'Beenden'}</button></div>
     <div id="fb"></div></div>`;
-  document.getElementById('hint').onclick=()=>{cur.hinted=true;document.getElementById('fb').innerHTML=`<div class="fb" style="background:var(--accent-soft)">💡 ${t.tip}</div>`;};
-  document.getElementById('quit').onclick=()=>{cur=null;render();};
+  if(!T)document.getElementById('hint').onclick=()=>{cur.hinted=true;document.getElementById('fb').innerHTML=`<div class="fb" style="background:var(--accent-soft)">💡 ${t.tip}</div>`;};
+  document.getElementById('quit').onclick=()=>{if(!testVerlassen())return;cur=null;render();};
   if(q.type==='choice')app.querySelectorAll('.ch').forEach(b=>b.onclick=()=>answer(b.dataset.c));
   else{
     const a=document.getElementById('ans'),pm=document.getElementById('pm');
@@ -1024,19 +1596,26 @@ function renderQuestion(){
   }
 }
 
-function answer(v){
-  if(cur.answered)return;
-  if(v===''||v==null){return;}
-  const q=cur.q,ok=check(q,v);cur.answered=true;
-  const h=S.hist[q.topic]=(S.hist[q.topic]||[]);h.push(ok?1:0);if(h.length>30)h.shift();
-  const st=S.st;st.answered++;
+/* Verbucht eine Antwort in Verlauf und Zählern (Übung und Test). lv = Stufe der Aufgabe,
+   leise = keine Meldung (im Test soll nichts verraten, ob die Antwort stimmte). */
+function verbuche(q,ok,lv,leise){
+  const st=S.st,h=S.hist[q.topic]=(S.hist[q.topic]||[]);h.push(ok?1:0);if(h.length>30)h.shift();
+  st.answered++;
   // 1×1: Antwort bei beiden Faktoren-Reihen verbuchen, für die Anzeige "Noch üben"
   if(q.reihen)new Set(q.reihen).forEach(r=>{const m=S.mal[r]=(S.mal[r]||[]);m.push(ok?1:0);if(m.length>20)m.shift();});
-  // "Schwer"-Medaillen nur für Buchthemen, das 1×1 kennt keine Stufe Schwer
-  if(ok){cur.right++;st.right++;st.combo++;st.bestCombo=Math.max(st.bestCombo,st.combo);if(S.lvl===3&&!TOPIC_BY_ID[q.topic].extra)st.hardRight++;
-    if(!cur.hinted){cur.stars++;S.stars++;}}
-  else{st.combo=0;cur.wrong.push({q:q.q,a:showAns(q),mine:v});}
-  if(h.length>=MASTER_MIN&&mastery(q.topic)>=MASTER_PCT&&!st.mastered[q.topic]){st.mastered[q.topic]=dayIdx();toast(`📘 Thema gemeistert: ${TOPIC_BY_ID[q.topic].name}`);}
+  // "Schwer"-Medaillen nur für Buchthemen, 1×1 und Kopfrechnen kennen keine Stufe Schwer
+  if(ok){st.right++;st.combo++;st.bestCombo=Math.max(st.bestCombo,st.combo);if(lv===3&&!TOPIC_BY_ID[q.topic].extra)st.hardRight++;}
+  else st.combo=0;
+  if(h.length>=MASTER_MIN&&mastery(q.topic)>=MASTER_PCT&&!st.mastered[q.topic]){st.mastered[q.topic]=dayIdx();if(!leise)toast(`📘 Thema gemeistert: ${TOPIC_BY_ID[q.topic].name}`);}
+}
+function answer(v){
+  if(cur.test)return testAnswer(v);
+  if(cur.answered)return;
+  if(v===''||v==null){return;}
+  const q=cur.q,ok=check(q,v),st=S.st;cur.answered=true;
+  verbuche(q,ok,S.lvl,false);
+  if(ok){cur.right++;if(!cur.hinted){cur.stars++;S.stars++;}}
+  else cur.wrong.push({q:q.q,a:showAns(q),mine:v});
   const last=cur.i+1>=cur.n;
   if(last&&cur.right===cur.n)st.perfect++;
   document.querySelectorAll('#inp input,#inp button').forEach(e=>e.disabled=true);
@@ -1057,18 +1636,129 @@ function renderResult(){
     <div class="stat"><div><b>${cur.right}/${cur.n}</b>richtig</div><div><b>⭐ ${cur.stars}</b>Sterne</div><div><b>${S.stars}</b>Sterne gesamt</div></div></div>
     ${cur.wrong.length?`<div class="card"><h2>Das schauen wir uns nochmal an</h2>${cur.wrong.map(w=>`<div style="margin-bottom:10px"><div>${w.q}</div><div class="mute">Deine Antwort: ${esc(w.mine)} · Richtig: <b>${esc(w.a)}</b></div></div>`).join('')}</div>`:''}
     <div class="row"><button class="primary" id="again">Nochmal</button><button id="home">Startseite</button></div>`;
-  const ids=cur.ids;
-  document.getElementById('again').onclick=()=>start(ids);
+  const ids=cur.ids,opt=cur.opt;
+  document.getElementById('again').onclick=()=>start(ids,null,opt);
   document.getElementById('home').onclick=()=>{cur=null;render();};
+}
+
+/* ---------- Tests ----------
+   10 neu erzeugte Aufgaben (TEST_STUFEN), keine Tipps und keine Rückmeldung bis zum Ende.
+   Serie, Tagesziel und Medaillen werden erst am Ende verbucht, damit keine Meldung
+   zwischendurch verrät, ob eine Antwort richtig war. Notenschlüssel: 50 % = Note 4. */
+const NOTEN=['','sehr gut','gut','befriedigend','ausreichend','mangelhaft','ungenügend'];
+const noteFor=pct=>pct>=88?1:pct>=75?2:pct>=62?3:pct>=50?4:pct>=25?5:6;
+const testName=id=>{if(id==='mix')return '🔀 Alle Themen';const t=TOPIC_BY_ID[id];return t?t.icon+' '+t.name:id;};
+const datum=ms=>{const d=new Date(ms);return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.';};
+const dauer=s=>Math.floor(s/60)+':'+pad(s%60)+' min';
+function testAnswer(v){
+  if(cur.answered||v===''||v==null)return;
+  cur.answered=true;
+  const q=cur.q,ok=check(q,v),lv=cur.lv[cur.i];
+  verbuche(q,ok,lv,true);
+  if(ok){cur.right++;cur.stars++;S.stars++;}
+  cur.log.push({q:q.q,svg:q.svg||'',a:showAns(q),mine:v,ok,sol:q.sol||''});
+  cur.i++;cur.answered=false;
+  if(cur.i>=cur.n)finishTest();else{cur.q=makeQ();save();}
+  render();window.scrollTo(0,0);
+}
+function finishTest(){
+  const st=S.st,pct=Math.round(100*cur.right/cur.n),note=noteFor(pct),sek=Math.round((Date.now()-cur.t0)/1000),id=cur.testId;
+  cur.done=true;cur.note=note;cur.sek=sek;
+  if(cur.right===cur.n)st.perfect++;
+  st.tests++;if(note===1)st.note1++;
+  if(!st.testBest[id]||note<st.testBest[id])st.testBest[id]=note;
+  const e={id,d:Date.now(),r:cur.right,n:cur.n,note,s:sek};if(id==='kopf')e.kl=KOPF.klasse;
+  S.tests.push(e);S.tests=S.tests.slice(-100);
+  activity(cur.n);   // Serie, Tagesziel und Medaillen; speichert auch
+}
+function renderTestResult(){
+  const pct=Math.round(100*cur.right/cur.n),nt=cur.note;
+  const say=['','Super, eine glatte Eins! 🏆','Sehr stark! 🎉','Gut gemacht! 👍','Bestanden, da geht noch mehr! 💪','Nicht aufgeben: üben und nochmal testen! 💪','Nicht aufgeben: üben und nochmal testen! 💪'][nt];
+  app.innerHTML=`<div class="card" style="text-align:center"><div class="mute">Test · ${esc(testName(cur.testId))}</div>
+    <div class="note">${nt}</div><div style="font-weight:700;margin-top:4px">Note ${nt} · ${NOTEN[nt]}</div><p style="margin:8px 0 14px">${say}</p>
+    <div class="stat"><div><b>${cur.right}/${cur.n}</b>richtig</div><div><b>${pct} %</b>erreicht</div><div><b>${dauer(cur.sek)}</b>Zeit</div></div></div>
+    <div class="card"><h2>Alle Aufgaben mit Lösung</h2>${cur.log.map((x,i)=>`<div class="tlog ${x.ok?'ok':'bad'}"><div><span class="k">${x.ok?'✓':'✗'} ${i+1}.</span>${x.q}</div>${x.ok?'':x.svg}
+      <div class="mute">Deine Antwort: ${esc(x.mine)}${x.ok?' · richtig':` · Richtig wäre: <b>${esc(x.a)}</b>`}</div>${x.ok?'':`<div class="mute" style="margin-top:4px">${x.sol}</div>`}</div>`).join('')}</div>
+    <div class="row"><button class="primary" id="tAgain">Neuer Test</button>${cur.right<cur.n?'<button id="tUeben">Thema üben</button>':''}<button id="tBack">Alle Tests</button></div>`;
+  const ids=cur.ids,id=cur.testId;
+  document.getElementById('tAgain').onclick=()=>start(ids,id);
+  const ub=document.getElementById('tUeben');if(ub)ub.onclick=()=>{if(id==='einmaleins')MAL.stufe=2;start(ids);};
+  document.getElementById('tBack').onclick=()=>{cur=null;tab='tests';render();};
+}
+function renderTests(){
+  const w=LW(),best=S.st.testBest||{},cnt={};S.tests.forEach(x=>{cnt[x.id]=(cnt[x.id]||0)+1;});
+  const tile=(id,icon,name)=>{const b=best[id];return `<button class="topic" data-test="${id}"><span class="ic">${icon}</span><span class="nm">${esc(name)}</span><span class="sm">${b?`Beste Note ${b} · ${cnt[id]||0} ${cnt[id]===1?'Test':'Tests'}`:'noch kein Test'}</span></button>`;};
+  const last=S.tests.slice(-8).reverse();
+  app.innerHTML=`<div class="card"><h2>📝 Tests</h2><div class="mute">Jeder Test hat 10 neue Aufgaben: erst leicht, dann mittel, am Ende schwer. Es gibt keine Tipps und keine Rückmeldung zwischendurch. Am Ende siehst du alle Lösungen und bekommst eine Note.</div></div>
+  <div class="card"><h2>Thema wählen · ${w.klasse}. Klasse</h2><div class="grid">${buchTopics().map(t=>tile(t.id,t.icon,t.name)).join('')}${tile('mix','🔀','Alle Themen gemischt')}</div></div>
+  <div class="card"><h2>Rechnen im Kopf</h2><div class="grid">${tile('einmaleins','✖️','1×1 · alle Reihen')}${tile('kopf','🧠','Kopfrechnen · '+KOPF.klasse+'. Klasse')}</div>
+    <div class="mute" style="margin-top:8px">Kopfrechnen nimmt die Klasse und die Rechenarten, die unter Üben eingestellt sind.</div></div>
+  ${last.length?`<div class="card"><h2>Letzte Tests</h2><div class="hist">${last.map(x=>`<span class="mute">${datum(x.d)}</span><span>${esc(testName(x.id))}</span><b>Note ${x.note} <span class="mute">(${x.r}/${x.n})</span></b>`).join('')}</div></div>`:''}
+  <div class="card"><div class="mute">Notenschlüssel: ab 88 % Note 1, ab 75 % Note 2, ab 62 % Note 3, ab 50 % Note 4, ab 25 % Note 5, darunter Note 6. Bei 10 Aufgaben: 9–10 richtig = 1, 8 = 2, 7 = 3, 5–6 = 4.</div></div>`;
+  app.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{const id=b.dataset.test;start(id==='mix'?buchTopics().map(t=>t.id):[id],id);});
+}
+
+/* ---------- Profile ---------- */
+const profOffen=new Set();   // aufgeklappte "Bearbeiten"-Bereiche, bleiben beim Neuzeichnen offen
+function wechsle(id){save();P.aktiv=id;P.gewaehlt=true;saveProfiles();load();cur=null;tab='ueben';render();window.scrollTo(0,0);
+  toast(`${profil().icon} Hallo ${profil().name}!`);}
+function renderProfil(){
+  const opts=sel=>Object.entries(LEHRWERKE).map(([k,w])=>`<option value="${k}"${k===sel?' selected':''}>${w.klasse}. Klasse · ${esc(w.name)} (${esc(w.schule)})</option>`).join('');
+  let h=P.gewaehlt?'':`<div class="card on"><h2>👋 Willkommen!</h2><div class="mute">Wer übt auf diesem Gerät? Unter Bearbeiten lassen sich Name, Bild und Buch anpassen. Danach beim richtigen Kind auf den blauen Knopf tippen.</div></div>`;
+  P.liste.forEach(p=>{
+    const on=p.id===P.aktiv,w=LEHRWERKE[p.lw]||LEHRWERKE[LW_DEFAULT],d=peek(p.id);
+    const nm=Object.keys((d.st||{}).medals||{}).length,nt=(d.tests||[]).length;
+    h+=`<div class="card${on?' on':''}"><div class="prof"><div class="av">${p.icon}</div><div style="flex:1;min-width:0"><b data-pname="${p.id}">${esc(p.name)}</b>
+      <div class="mute">${w.klasse}. Klasse · ${esc(w.name)}</div><div class="mute">⭐ ${d.stars||0} · 🏅 ${nm} ${nm===1?'Medaille':'Medaillen'} · 📝 ${nt} ${nt===1?'Test':'Tests'}</div></div></div>
+      <details data-det="${p.id}"${profOffen.has(p.id)||(!P.gewaehlt&&on)?' open':''}><summary class="mute" style="margin-top:10px;cursor:pointer">Bearbeiten</summary>
+        <label class="lb">Name</label><input type="text" data-name="${p.id}" maxlength="20" autocomplete="off" value="${esc(p.name)}">
+        <label class="lb">Bild</label><div class="row">${ICONS.map(ic=>`<button class="seg mal ${ic===p.icon?'on':''}" data-icon="${p.id}|${ic}">${ic}</button>`).join('')}</div>
+        <label class="lb">Buch bzw. Klasse</label><select data-lw="${p.id}">${opts(p.lw)}</select>
+        ${P.liste.length>1?`<div class="row" style="margin-top:12px"><button data-del="${p.id}">Profil löschen</button></div>`:''}
+      </details>
+      <div class="row" style="margin-top:12px">${on?(P.gewaehlt?'<span class="mute">✓ Übt gerade</span>':`<button class="primary" data-go="${p.id}">Los geht's</button>`):`<button class="primary" data-go="${p.id}">Zu ${esc(p.name)} wechseln</button>`}</div></div>`;
+  });
+  h+=P.liste.length<6?`<details class="card"><summary><b>➕ Kind hinzufügen</b></summary>
+      <label class="lb">Name</label><input type="text" id="npName" maxlength="20" autocomplete="off" placeholder="Vorname">
+      <label class="lb">Buch bzw. Klasse</label><select id="npLw">${opts(LW_DEFAULT)}</select>
+      <div class="row" style="margin-top:12px"><button class="primary" id="npAdd">Hinzufügen</button></div></details>`:'';
+  h+=`<div class="card"><h2>📚 Neues Schuljahr, neues Buch</h2><div class="mute">Zu Beginn jedes Schuljahrs Claude Fotos vom Inhaltsverzeichnis des neuen Mathebuchs schicken.
+    Danach steht das Buch hier zur Auswahl und wird beim Kind eingestellt. Sterne, Serie, Medaillen und Tests bleiben erhalten.</div>
+    <div style="margin-top:10px">${Object.values(LEHRWERKE).map(w=>`<div style="margin-top:6px">📘 <b>${w.klasse}. Klasse</b> · ${esc(w.name)} · ${esc(w.schule)} <span class="mute">(${w.themen.length} Themen, ${w.buch?'Seiten '+w.ab+' bis '+w.bis:'Seiten folgen'})</span></div>`).join('')}</div></div>`;
+  app.innerHTML=h;
+  app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>wechsle(b.dataset.go));
+  app.querySelectorAll('details[data-det]').forEach(d=>d.ontoggle=()=>{if(d.open)profOffen.add(d.dataset.det);else profOffen.delete(d.dataset.det);});
+  /* Name: kein Neuzeichnen beim Ändern, sonst ginge ein gleichzeitiger Tipp auf einen Knopf verloren. */
+  app.querySelectorAll('input[data-name]').forEach(i=>i.onchange=()=>{
+    const p=P.liste.find(x=>x.id===i.dataset.name);p.name=i.value.trim().slice(0,20)||'Kind';saveProfiles();renderHeader();
+    const b=app.querySelector(`[data-pname="${p.id}"]`);if(b)b.textContent=p.name;});
+  app.querySelectorAll('[data-icon]').forEach(b=>b.onclick=()=>{const [id,ic]=b.dataset.icon.split('|');P.liste.find(x=>x.id===id).icon=ic;saveProfiles();renderHeader();renderProfil();});
+  app.querySelectorAll('select[data-lw]').forEach(s=>s.onchange=()=>{P.liste.find(x=>x.id===s.dataset.lw).lw=s.value;saveProfiles();renderHeader();renderProfil();});
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const p=P.liste.find(x=>x.id===b.dataset.del);
+    if(!confirm(`Profil ${p.name} mit allen Sternen, Medaillen und Tests löschen? Das lässt sich nicht rückgängig machen.`))return;
+    try{localStorage.removeItem(keyOf(p.id));}catch(e){}
+    P.liste=P.liste.filter(x=>x.id!==p.id);
+    if(P.aktiv===p.id){P.aktiv=P.liste[0].id;load();}
+    saveProfiles();render();});
+  const add=document.getElementById('npAdd');
+  if(add)add.onclick=()=>{
+    const n=document.getElementById('npName').value.trim().slice(0,20);if(!n){document.getElementById('npName').focus();return;}
+    const used=P.liste.map(x=>x.icon),id='p'+Date.now().toString(36);
+    P.liste.push({id,name:n,icon:ICONS.find(i=>!used.includes(i))||ICONS[0],lw:document.getElementById('npLw').value});
+    saveProfiles();renderProfil();toast(`${n} ist dabei`);};
 }
 
 function renderProgress(){
   app.innerHTML=`<div class="card"><div class="stat"><div><b>⭐ ${S.stars}</b>Sterne</div><div><b>🔥 ${liveStreak()}</b>Tage in Folge</div><div><b>${S.st.answered}</b>Aufgaben</div></div></div>
   <div class="card"><h2>Fortschritt je Thema</h2><div class="mute" style="margin-bottom:10px">Anteil richtiger Antworten bei den letzten 30 Aufgaben je Thema.</div>
-  ${TOPICS.map(t=>{const m=mastery(t.id),n=(S.hist[t.id]||[]).length;return `<div style="margin-bottom:14px"><div class="row" style="justify-content:space-between"><span>${t.icon} ${t.name}</span><span class="mute">${m===null?'–':m+' % ('+n+' Aufg.)'}</span></div><div class="bar"><i style="width:${m||0}%;background:${m!==null&&m<60?'var(--bad)':'var(--ok)'}"></i></div></div>`;}).join('')}</div>
+  ${progressTopics().map(t=>{const m=mastery(t.id),n=(S.hist[t.id]||[]).length;return `<div style="margin-bottom:14px"><div class="row" style="justify-content:space-between"><span>${t.icon} ${t.name}</span><span class="mute">${m===null?'–':m+' % ('+n+' Aufg.)'}</span></div><div class="bar"><i style="width:${m||0}%;background:${m!==null&&m<60?'var(--bad)':'var(--ok)'}"></i></div></div>`;}).join('')}</div>
   <div class="card"><button id="reset">Fortschritt zurücksetzen</button></div>`;
-  document.getElementById('reset').onclick=()=>{if(confirm('Wirklich alle Sterne, Medaillen, die Serie und den Fortschritt löschen? Die Seitenzuordnung bleibt erhalten.')){S.stars=0;S.hist={};S.mal={};S.st=freshStats();save();renderProgress();}};
+  document.getElementById('reset').onclick=()=>{if(confirm(`Wirklich alle Sterne, Medaillen, Tests, die Serie und den Fortschritt von ${profil().name} löschen? Die Seitenzuordnung bleibt erhalten.`)){S.stars=0;S.hist={};S.mal={};S.tests=[];S.st=freshStats();save();renderProgress();}};
 }
+/* Fortschritt: Themen des Lehrwerks, dann 1×1 und Kopfrechnen, dann geübte Themen früherer Bücher. */
+function progressTopics(){const own=buchTopics(),ids=new Set(own.map(t=>t.id));
+  return own.concat(TOPICS.filter(t=>t.extra),TOPICS.filter(t=>!t.extra&&!ids.has(t.id)&&(S.hist[t.id]||[]).length));}
 
 /* ---------- Erfolge ---------- */
 function ringHtml(t){
@@ -1130,32 +1820,36 @@ function renderErfolge(){
   });
   h+=`<div class="card"><h2>So funktioniert's</h2><p class="mute" style="margin:0">Jede beantwortete Aufgabe zählt für die Serie und das Tagesziel (${GOAL} Aufgaben am Tag).
     Der Serienschutz fängt einen verpassten Tag pro Woche ab. Ein Thema gilt als gemeistert, wenn mindestens ${MASTER_MIN} Aufgaben geübt und davon ${MASTER_PCT} % der letzten 30 richtig sind.
+    Ein Test zählt mit seinen 10 Aufgaben für Serie und Tagesziel; die Test-Medaillen gibt es für geschriebene Tests und gute Noten.
     Für „Schwer“ zählen nur richtige Antworten auf der Stufe Schwer.</p></div>`;
   app.innerHTML=h;
 }
 
 function renderPages(){
-  let h=`<div class="card"><h2>📖 Westermann Mathematik 5</h2><div class="mute">Tippe auf einen Abschnitt, dann geht es mit passenden Aufgaben los. Die Seitenzahlen stammen aus dem Inhaltsverzeichnis.</div></div>`;
-  for(let c=1;c<CHAPTERS.length;c++){
-    h+=`<div class="card"><h2>${c} · ${esc(CHAPTERS[c])}</h2>`;
-    BOOK.forEach((b,i)=>{if(b[1]!==c)return;const e=secEnd(i);
+  const w=LW();
+  let h=`<div class="card"><h2>📖 ${esc(w.name)}</h2><div class="mute">${w.buch?'Tippe auf einen Abschnitt, dann geht es mit passenden Aufgaben los. Die Seitenzahlen stammen aus dem Inhaltsverzeichnis.':esc(w.hinweis||'Für dieses Buch sind noch keine Seiten eingetragen.')}</div></div>`;
+  if(w.buch)for(let c=1;c<w.kapitel.length;c++){
+    h+=`<div class="card"><h2>${c} · ${esc(w.kapitel[c])}</h2>`;
+    w.buch.forEach((b,i)=>{if(b[1]!==c)return;const e=secEnd(i);
       h+=`<button class="secbtn" data-sec="${i}"><span class="pg">S. ${b[0]}${e>b[0]?'–'+e:''}</span><span>${esc(b[2])}</span><span class="ics">${b[3].map(id=>TOPIC_BY_ID[id].icon).join(' ')}</span></button>`;});
     h+='</div>';
   }
+  else h+=`<div class="card"><h2>Themen der ${w.klasse}. Klasse</h2>${buchTopics().map(t=>`<button class="secbtn" data-topic="${t.id}"><span class="pg ics">${t.icon}</span><span>${esc(t.name)}</span><span></span></button>`).join('')}</div>`;
   h+=`<details class="card"><summary><b>Eigene Seiten ergänzen</b></summary>
     <div class="mute" style="margin:10px 0 12px">Nur nötig, wenn ihr eine andere Ausgabe des Buchs habt oder eine Seite zusätzlich einem Thema zuordnen wollt. Die Seitensuche zeigt dann beides.</div>
     <div class="pagetbl"><b>Thema</b><b>von S.</b><b>bis S.</b>
-    ${BUCH_TOPICS.map(t=>{const r=S.pages[t.id]||[];return `<span>${t.icon} ${t.name}</span><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="0" value="${r[0]??''}"><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="1" value="${r[1]??''}">`;}).join('')}
+    ${buchTopics().map(t=>{const r=S.pages[t.id]||[];return `<span>${t.icon} ${t.name}</span><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="0" value="${r[0]??''}"><input class="small" type="number" inputmode="numeric" data-id="${t.id}" data-k="1" value="${r[1]??''}">`;}).join('')}
     </div></details>`;
   app.innerHTML=h;
-  app.querySelectorAll('[data-sec]').forEach(b=>b.onclick=()=>start(BOOK[+b.dataset.sec][3]));
+  app.querySelectorAll('[data-sec]').forEach(b=>b.onclick=()=>{const s=w.buch[+b.dataset.sec];start(s[3],null,s[4]);});
+  app.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>start([b.dataset.topic]));
   app.querySelectorAll('input[data-id]').forEach(i=>i.onchange=()=>{
     const id=i.dataset.id,r=(S.pages[id]||[null,null]).slice();
     r[+i.dataset.k]=i.value===''?null:parseInt(i.value,10);S.pages[id]=r;save();
   });
 }
 
-load();render();
+loadProfiles();load();if(!P.gewaehlt)tab='profil';render();
 </script>
 </body>
 </html>
