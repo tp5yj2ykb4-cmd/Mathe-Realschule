@@ -582,6 +582,82 @@ function g1x1(){
   return {q:`<b>${a} · ? = ${c}</b>`,a:b,reihen,ph:'fehlende Zahl',sol:`Rechne rückwärts: ${c} : ${a} = ${b}. Also ${a} · ${b} = ${c}.`};
 }
 
+/* ---------- Kopfrechnen Grundschule (Klasse 1 bis 4, Lehrplan Bayern) ---------- */
+/* KOPF.klasse bestimmt Zahlenraum und Aufgabenarten, KOPF.ops die Rechenarten.
+   Alles soll ohne Papier lösbar sein: glatte Zahlen, kleine Faktoren, keine
+   negativen Ergebnisse. In Klasse 1 heißt "·" Verdoppeln und ":" Halbieren. */
+const KOPF={klasse:4,ops:['+','-','*',':']};
+const KOPF_INFO={1:'Zahlenraum bis 20: Plus und Minus mit und ohne Zehnerübergang, Verdoppeln und Halbieren.',
+  2:'Zahlenraum bis 100: Plus und Minus, kleines Einmaleins und Geteilt ohne Rest.',
+  3:'Zahlenraum bis 1 000: glatte Zehner und Hunderter, Zehner-Einmaleins, Geteilt mit Rest.',
+  4:'Zahlenraum bis 1 000 000: glatte Tausender, Ergänzen, Mal und Geteilt mit Zehnern und Hundertern.'};
+function gKopf(){
+  const k=KOPF.klasse,op=pick(KOPF.ops.length?KOPF.ops:['+']);
+  const plus=(a,b,hint)=>({q:`<b>${fmt(a)} + ${fmt(b)}</b> = ?`,a:a+b,sol:(hint?hint+' ':'')+`${fmt(a)} + ${fmt(b)} = ${fmt(a+b)}.`});
+  const minus=(a,b,hint)=>({q:`<b>${fmt(a)} − ${fmt(b)}</b> = ?`,a:a-b,sol:(hint?hint+' ':'')+`${fmt(a)} − ${fmt(b)} = ${fmt(a-b)}. Probe: ${fmt(a-b)} + ${fmt(b)} = ${fmt(a)}.`});
+  const mal=(a,b,hint)=>({q:`<b>${fmt(a)} · ${fmt(b)}</b> = ?`,a:a*b,sol:(hint?hint+' ':'')+`${fmt(a)} · ${fmt(b)} = ${fmt(a*b)}.`});
+  const geteilt=(c,b,hint)=>({q:`<b>${fmt(c)} : ${fmt(b)}</b> = ?`,a:c/b,sol:(hint?hint+' ':'')+`${fmt(c)} : ${fmt(b)} = ${fmt(c/b)}, denn ${fmt(c/b)} · ${fmt(b)} = ${fmt(c)}.`});
+  const rest=(b,q,r)=>{const c=b*q+r;return {q:`<b>${fmt(c)} : ${b}</b> = ? Rest ?`,type:'pair',ph:'Ergebnis | Rest',a:[q,r],fa:`${q} Rest ${r}`,
+    sol:`${q} · ${b} = ${fmt(b*q)}, bis ${fmt(c)} fehlen noch ${r}. Also ${q} Rest ${r}.`};};
+  if(k===1){
+    if(op==='+'){const a=R(1,15),b=R(1,20-a),ueber=a<10&&a+b>10;
+      return plus(a,b,ueber?`Erst bis 10: ${a} + ${10-a} = 10, dann noch ${b-(10-a)} dazu.`:'');}
+    if(op==='-'){const a=R(5,20),b=R(1,a-1),ueber=a>10&&a-b<10;
+      return minus(a,b,ueber?`Erst bis 10: ${a} − ${a-10} = 10, dann noch ${b-(a-10)} weg.`:'');}
+    const n=R(1,10);
+    if(op==='*')return {q:`Verdopple <b>${n}</b>.`,a:2*n,sol:`Das Doppelte von ${n}: ${n} + ${n} = ${2*n}.`};
+    return {q:`Halbiere <b>${2*n}</b>.`,a:n,sol:`Die Hälfte von ${2*n} ist ${n}, denn ${n} + ${n} = ${2*n}.`};
+  }
+  if(k===2){
+    if(op==='+'){const kind=R(0,2);
+      if(kind===0){const a=R(11,89),b=R(1,Math.min(9,100-a));return plus(a,b,(a%10)+b>10?`Erst zum nächsten Zehner: ${a} + ${10-a%10} = ${a+10-a%10}, dann den Rest.`:'');}
+      if(kind===1){const a=R(11,89),b=R(1,Math.floor((100-a)/10))*10;return plus(a,b,'Nur die Zehner ändern sich.');}
+      const a=R(11,60),b=R(11,100-a);return plus(a,b,`Erst die Zehner: ${a} + ${b-b%10} = ${a+b-b%10}, dann die Einer: + ${b%10}.`);}
+    if(op==='-'){const kind=R(0,2);
+      if(kind===0){const a=R(11,99),b=R(1,9);return minus(a,b,a%10>0&&b>a%10?`Erst zum Zehner: ${a} − ${a%10} = ${a-a%10}, dann noch ${b-a%10} weg.`:'');}
+      if(kind===1){const a=R(21,99),b=R(1,Math.floor(a/10))*10;return minus(a,b,'Nur die Zehner ändern sich.');}
+      const a=R(30,99),b=R(11,a-1);return minus(a,b,`Erst die Zehner: ${a} − ${b-b%10} = ${a-b+b%10}, dann die Einer: − ${b%10}.`);}
+    if(op==='*')return mal(R(1,10),R(1,10));
+    const b=R(1,10);return geteilt(b*R(1,10),b);
+  }
+  if(k===3){
+    if(op==='+'){const kind=R(0,2);
+      if(kind===0){const a=R(101,989),b=R(1,Math.min(9,Math.floor((1000-a)/10)))*10;return plus(a,b,'Die Einer bleiben, rechne mit den Zehnern.');}
+      if(kind===1){const a=R(11,79)*10,b=R(11,Math.floor((1000-a)/10))*10;return plus(a,b,`Wie ${a/10} + ${b/10}, nur mit Zehnern: ${a/10+b/10} Zehner.`);}
+      const a=R(1,8)*100,b=R(1,9-a/100)*100;return plus(a,b);}
+    if(op==='-'){const kind=R(0,2);
+      if(kind===0){const a=R(120,999),b=R(1,Math.floor(a/10)%10||1)*10;return minus(a,b,'Die Einer bleiben, rechne mit den Zehnern.');}
+      if(kind===1){const a=R(30,99)*10,b=R(11,a/10-1)*10;return minus(a,b,`Wie ${a/10} − ${b/10}, nur mit Zehnern.`);}
+      const a=R(3,10)*100,b=R(11,a/10-1)*10;return minus(a,b,`Erst die Hunderter, dann die Zehner abziehen.`);}
+    if(op==='*'){const kind=R(0,2);
+      if(kind===0)return mal(R(2,10),R(2,10));
+      if(kind===1){const a=R(2,9),b=R(2,9)*10;return mal(a,b,`Rechne ${a} · ${b/10} = ${a*b/10} und hänge eine Null an.`);}
+      const a=R(11,25),b=R(2,9);return mal(a,b,`Zerlegen: ${a-a%10} · ${b} = ${(a-a%10)*b} und ${a%10} · ${b} = ${(a%10)*b}, zusammen ${a*b}.`);}
+    const kind=R(0,2);
+    if(kind===0){const b=R(2,9),q=R(2,9)*10;return geteilt(b*q,b,`Rechne ${b*q/10} : ${b} = ${q/10} und hänge eine Null an.`);}
+    if(kind===1){const b=R(3,9);return rest(b,R(2,9),R(1,b-1));}
+    const b=R(2,10);return geteilt(b*R(2,10),b);
+  }
+  // Klasse 4
+  if(op==='+'){const kind=R(0,2);
+    if(kind===0){const a=R(11,89)*100,b=R(11,89)*100;return plus(a,b,`Rechne mit Hundertern: ${a/100} + ${b/100} = ${(a+b)/100} Hunderter.`);}
+    if(kind===1){const a=R(11,90)*1000,b=R(1,9)*1000;return plus(a,b,`Rechne mit Tausendern: ${a/1000} + ${b/1000} = ${(a+b)/1000} Tausender.`);}
+    const a=R(1,99)*100;return {q:`<b>${fmt(a)} + ? = 10 000</b>`,a:10000-a,ph:'fehlende Zahl',sol:`Ergänzen: 10 000 − ${fmt(a)} = ${fmt(10000-a)}.`};}
+  if(op==='-'){const kind=R(0,2);
+    if(kind===0){const a=R(20,99)*100,b=R(11,a/100-1)*100;return minus(a,b,`Rechne mit Hundertern: ${a/100} − ${b/100} = ${(a-b)/100} Hunderter.`);}
+    if(kind===1){const b=R(11,99)*100;return minus(10000,b,'Tipp: Zähle von der kleineren Zahl bis 10 000 hoch.');}
+    const a=R(11,99)*1000,b=R(1,9)*1000;return minus(a,b,`Rechne mit Tausendern: ${a/1000} − ${b/1000} = ${(a-b)/1000} Tausender.`);}
+  if(op==='*'){const kind=R(0,3);
+    if(kind===0){const a=R(2,9)*100,b=R(2,9);return mal(a,b,`Rechne ${a/100} · ${b} = ${a*b/100} und hänge zwei Nullen an.`);}
+    if(kind===1){const a=R(2,9)*10,b=R(2,9)*10;return mal(a,b,`Rechne ${a/10} · ${b/10} = ${a*b/100} und hänge zwei Nullen an.`);}
+    if(kind===2){const a=R(12,49),b=R(3,9);return mal(a,b,`Zerlegen: ${a-a%10} · ${b} = ${(a-a%10)*b} und ${a%10} · ${b} = ${(a%10)*b}, zusammen ${a*b}.`);}
+    const [a,b]=pick([[25,4],[25,8],[50,6],[125,8],[250,4],[75,4],[15,6]]);return mal(a,b);}
+  const kind=R(0,2);
+  if(kind===0){const b=R(2,9),q=R(2,9)*100;return geteilt(b*q,b,`Rechne ${b*q/100} : ${b} = ${q/100} und hänge zwei Nullen an.`);}
+  if(kind===1){const b=R(2,9)*10,q=R(2,9)*10;return geteilt(b*q,b,`Streiche bei beiden Zahlen eine Null: ${b*q/10} : ${b/10} = ${q}.`);}
+  const b=R(3,9);return rest(b,R(11,30),R(1,b-1));
+}
+
 /* Reihenfolge wie im Buch. */
 const TOPICS=[
   {id:'daten',name:'Daten & Diagramme',icon:'📊',gens:[gDiagramm,gStrich],tip:'Geh vom oberen Ende der Säule waagrecht zur Achse und lies dort ab. In einer Strichliste ist jedes Bündel 5.'},
@@ -601,6 +677,7 @@ const TOPICS=[
   {id:'flaeche',name:'Umfang & Flächeninhalt',icon:'🟩',gens:[gFlaeche,gFlEinheit],tip:'Umfang = alle Seiten zusammen. Fläche Rechteck = Länge · Breite. Flächeneinheiten haben die Umrechnungszahl 100: mm², cm², dm², m², a, ha, km².'},
   /* extra: eigener Bereich auf der Startseite, nicht im Themen-Raster, nicht in
      "Alles gemischt", nicht in der Buchzuordnung und nicht in "Alles drin". */
+  {id:'kopf',name:'Kopfrechnen Grundschule',icon:'🧠',gens:[gKopf],extra:true,tip:'Zerlege schwierige Zahlen: Erst die Zehner, dann die Einer. Bei glatten Zahlen rechnest du ohne die Nullen und hängst sie am Ende wieder an.'},
   {id:'einmaleins',name:'1×1 üben',icon:'✖️',gens:[g1x1],extra:true,tip:'Tauschaufgabe hilft: 7 · 8 ist dasselbe wie 8 · 7. Geteilt ist die Umkehrung: 56 : 8 = 7, weil 7 · 8 = 56. Bei einer Lücke rechnest du rückwärts mit Geteilt.'}
 ];
 const TOPIC_BY_ID=Object.fromEntries(TOPICS.map(t=>[t.id,t]));
@@ -677,6 +754,9 @@ function load(){try{S=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){S={};}
   S.mal=S.mal||{};   // 1×1: je Reihe die letzten 20 Antworten (1 = richtig)
   const mr=(Array.isArray(S.malReihen)?S.malReihen:[]).filter(r=>Number.isInteger(r)&&r>=1&&r<=9);
   MAL.reihen=mr.length?mr:[1,2,3,4,5,6,7,8,9];
+  if([1,2,3,4].includes(S.kopfKlasse))KOPF.klasse=S.kopfKlasse;
+  const ko=(Array.isArray(S.kopfOps)?S.kopfOps:[]).filter(o=>['+','-','*',':'].includes(o));
+  if(ko.length)KOPF.ops=ko;
   S.st=Object.assign(freshStats(),S.st||{});delete S.days;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
@@ -835,9 +915,24 @@ function malCard(){
   </div>`;
 }
 
+/* Kasten "Kopfrechnen Grundschule": Klasse 1 bis 4 und Rechenarten wählen. */
+function kopfCard(){
+  const kl=KOPF.klasse;
+  const lbl=kl===1?{'+':'+','-':'−','*':'Verdoppeln',':':'Halbieren'}:{'+':'+','-':'−','*':'·',':':':'};
+  return `<div class="card"><h2>🧠 Kopfrechnen · Grundschule</h2>
+    <div class="mute" style="margin-bottom:8px">Klasse</div>
+    <div class="row">${[1,2,3,4].map(k=>`<button class="seg mal ${kl===k?'on':''}" data-kl="${k}">${k}. Klasse</button>`).join('')}</div>
+    <div class="mute" style="margin:12px 0 8px">Rechenarten</div>
+    <div class="row">${['+','-','*',':'].map(o=>`<button class="seg mal ${KOPF.ops.includes(o)?'on':''}" data-op="${o}">${lbl[o]}</button>`).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="primary" id="kopfGo">Start · 10 Aufgaben</button></div>
+    <div class="mute" style="margin-top:8px">${KOPF_INFO[kl]}</div>
+  </div>`;
+}
+
 function renderHome(msg=''){
   app.innerHTML=`${goalStrip()}
   ${malCard()}
+  ${kopfCard()}
   <div class="card"><h2>📖 Aufgaben zur Buchseite</h2>
     <div class="row"><input id="pg" type="number" inputmode="numeric" min="1" max="400" placeholder="Seitenzahl im Buch" style="flex:1;min-width:150px"><button class="primary" id="pgGo">Suchen</button></div>
     <div id="pgOut" class="mute" style="margin-top:10px">${msg}</div></div>
@@ -858,6 +953,14 @@ function renderHome(msg=''){
       if(!MAL.reihen.length)MAL.reihen=[1,2,3,4,5,6,7,8,9];}
     S.malReihen=MAL.reihen;save();renderHome(document.getElementById('pgOut').innerHTML);
   });
+  // Kopfrechnen: Klasse wählen, Rechenarten an- und abwählen (mindestens eine bleibt)
+  app.querySelectorAll('[data-kl]').forEach(b=>b.onclick=()=>{
+    KOPF.klasse=+b.dataset.kl;S.kopfKlasse=KOPF.klasse;save();renderHome(document.getElementById('pgOut').innerHTML);});
+  app.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{
+    const o=b.dataset.op,neu=KOPF.ops.includes(o)?KOPF.ops.filter(x=>x!==o):[...KOPF.ops,o];
+    if(neu.length)KOPF.ops=['+','-','*',':'].filter(x=>neu.includes(x));
+    S.kopfOps=KOPF.ops;save();renderHome(document.getElementById('pgOut').innerHTML);});
+  document.getElementById('kopfGo').onclick=()=>start(['kopf']);
   document.getElementById('mal1').onclick=()=>{MAL.stufe=1;start(['einmaleins']);};
   document.getElementById('mal2').onclick=()=>{MAL.stufe=2;start(['einmaleins']);};
   const go=()=>{
