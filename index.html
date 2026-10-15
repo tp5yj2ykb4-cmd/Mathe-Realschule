@@ -41,6 +41,7 @@ input.small{width:84px}
 .q{font-size:20px;margin:6px 0 14px}
 .q b{color:var(--accent)}
 .choices{display:grid;gap:8px}
+.ch.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 .fb{border-radius:12px;padding:12px 14px;margin-top:12px}
 .fb.ok{background:var(--ok-soft)}
 .fb.bad{background:var(--bad-soft)}
@@ -1558,32 +1559,35 @@ function makeQ(){
 /* testId gesetzt = Test (Themen-ID, 'mix' für alle Themen), sonst normale Übungsrunde. */
 function start(ids,testId,opt){
   cur={ids,i:0,n:10,right:0,stars:0,wrong:[],seen:new Set(),q:null,answered:false,hinted:false,done:false,
-    test:!!testId,testId:testId||null,lv:TEST_STUFEN,log:[],t0:Date.now(),opt:opt||null};
-  cur.q=makeQ();render();
+    test:!!testId,testId:testId||null,lv:TEST_STUFEN,log:[],t0:Date.now(),opt:opt||null,qs:[],ant:[]};
+  cur.q=cur.qs[0]=makeQ();render();
 }
 
 function renderQuestion(){
-  const q=cur.q,t=TOPIC_BY_ID[q.topic],T=cur.test;
+  const q=cur.q,t=TOPIC_BY_ID[q.topic],T=cur.test,alt=T?(cur.ant[cur.i]??''):'',letzte=T&&cur.i+1>=cur.n;
   let input='';
   if(q.type==='choice'){
-    input=`<div class="choices">${q.choices.map(c=>`<button class="ch" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
+    /* Im Test ist eine schon gegebene Antwort markiert; nochmal antippen geht weiter. */
+    input=`<div class="choices">${q.choices.map(c=>`<button class="ch${alt===c?' on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
   }else{
     /* Die Zahlentastatur des iPhones hat kein Minus. Bei möglichen negativen
        Ergebnissen (q.neg) gibt es deshalb einen ±-Knopf vor dem Feld. */
     const im=q.type==='word'?(q.bin?'numeric':'text'):(q.type==='pair'||q.type==='time')?'text':'decimal';
-    input=`<div class="row">${q.neg?'<button type="button" id="pm" aria-label="Vorzeichen wechseln" style="min-width:52px;font-weight:700">±</button>':''}<input id="ans" type="text" inputmode="${im}" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="${q.type==='word'&&!q.bin?'characters':'off'}" placeholder="${esc(q.ph||'Deine Antwort')}" style="flex:1;min-width:140px">${q.unit?`<span class="suffix">${esc(q.unit)}</span>`:''}</div>
+    input=`<div class="row">${q.neg?'<button type="button" id="pm" aria-label="Vorzeichen wechseln" style="min-width:52px;font-weight:700">±</button>':''}<input id="ans" type="text" inputmode="${im}" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="${q.type==='word'&&!q.bin?'characters':'off'}" placeholder="${esc(q.ph||'Deine Antwort')}" value="${esc(alt)}" style="flex:1;min-width:140px">${q.unit?`<span class="suffix">${esc(q.unit)}</span>`:''}</div>
     ${q.type==='pair'?'<div class="mute" style="margin-top:6px">Zwei Zahlen, getrennt durch Leerzeichen oder |</div>':''}
     ${q.type==='geld'?'<div class="mute" style="margin-top:6px">Mit Komma schreiben, z. B. 2,35</div>':''}
-    <div class="row" style="margin-top:12px"><button class="primary" id="ok">${T?'Weiter':'Prüfen'}</button></div>`;
+    <div class="row" style="margin-top:12px"><button class="primary" id="ok">${T?(letzte?'Test abgeben':'Weiter'):'Prüfen'}</button></div>`;
   }
+  if(T&&q.type==='choice'&&letzte)input+='<div class="mute" style="margin-top:8px">Mit dem Antippen gibst du den Test ab.</div>';
   /* Im Test: kein Tipp, keine Rückmeldung, keine Sterne-Anzeige. */
   app.innerHTML=`<div class="card">
     <div class="row" style="justify-content:space-between"><span class="mute">${T?'📝 Test · ':''}${t.icon} ${t.name} · ${T?'Aufgabe':'Frage'} ${cur.i+1} von ${cur.n}</span>${T?'':`<span class="mute">⭐ ${cur.stars}</span>`}</div>
     <div class="prog"><i style="width:${cur.i/cur.n*100}%"></i></div>
     <div class="q">${q.q}</div>${q.svg||''}
     <div id="inp">${input}</div>
-    <div class="row" style="margin-top:12px">${T?'':'<button id="hint">💡 Tipp</button>'}<button id="quit">${T?'Test abbrechen':'Beenden'}</button></div>
+    <div class="row" style="margin-top:12px">${T?(cur.i>0?'<button id="zur">‹ Zurück</button>':''):'<button id="hint">💡 Tipp</button>'}<button id="quit">${T?'Test abbrechen':'Beenden'}</button></div>
     <div id="fb"></div></div>`;
+  const zb=document.getElementById('zur');if(zb)zb.onclick=testZurueck;
   if(!T)document.getElementById('hint').onclick=()=>{cur.hinted=true;document.getElementById('fb').innerHTML=`<div class="fb" style="background:var(--accent-soft)">💡 ${t.tip}</div>`;};
   document.getElementById('quit').onclick=()=>{if(!testVerlassen())return;cur=null;render();};
   if(q.type==='choice')app.querySelectorAll('.ch').forEach(b=>b.onclick=()=>answer(b.dataset.c));
@@ -1650,16 +1654,25 @@ const noteFor=pct=>pct>=88?1:pct>=75?2:pct>=62?3:pct>=50?4:pct>=25?5:6;
 const testName=id=>{if(id==='mix')return '🔀 Alle Themen';const t=TOPIC_BY_ID[id];return t?t.icon+' '+t.name:id;};
 const datum=ms=>{const d=new Date(ms);return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.';};
 const dauer=s=>Math.floor(s/60)+':'+pad(s%60)+' min';
+/* Im Test werden Antworten nur gemerkt (cur.ant), die Aufgaben bleiben in cur.qs. So kann
+   man mit "Zurück" eine Antwort ändern. Gewertet wird erst beim Abgeben (testAuswerten). */
 function testAnswer(v){
-  if(cur.answered||v===''||v==null)return;
-  cur.answered=true;
-  const q=cur.q,ok=check(q,v),lv=cur.lv[cur.i];
-  verbuche(q,ok,lv,true);
-  if(ok){cur.right++;cur.stars++;S.stars++;}
-  cur.log.push({q:q.q,svg:q.svg||'',a:showAns(q),mine:v,ok,sol:q.sol||''});
-  cur.i++;cur.answered=false;
-  if(cur.i>=cur.n)finishTest();else{cur.q=makeQ();save();}
+  if(v===''||v==null)return;
+  cur.ant[cur.i]=v;cur.i++;
+  if(cur.i>=cur.n){testAuswerten();}
+  else{if(!cur.qs[cur.i])cur.qs[cur.i]=makeQ();cur.q=cur.qs[cur.i];}
   render();window.scrollTo(0,0);
+}
+function testZurueck(){
+  const a=document.getElementById('ans');if(a&&a.value.trim())cur.ant[cur.i]=a.value;   // Getipptes nicht verlieren
+  cur.i--;cur.q=cur.qs[cur.i];render();window.scrollTo(0,0);
+}
+function testAuswerten(){
+  cur.qs.forEach((q,i)=>{const v=cur.ant[i],ok=check(q,v);
+    verbuche(q,ok,cur.lv[i],true);
+    if(ok){cur.right++;cur.stars++;S.stars++;}
+    cur.log.push({q:q.q,svg:q.svg||'',a:showAns(q),mine:v,ok,sol:q.sol||''});});
+  finishTest();
 }
 function finishTest(){
   const st=S.st,pct=Math.round(100*cur.right/cur.n),note=noteFor(pct),sek=Math.round((Date.now()-cur.t0)/1000),id=cur.testId;
